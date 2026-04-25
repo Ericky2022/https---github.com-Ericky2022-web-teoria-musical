@@ -1,7 +1,16 @@
 import { CommonModule } from "@angular/common";
-import { HttpClient } from "@angular/common/http";
 import { Component, ElementRef, ViewChild } from "@angular/core";
 import { FormsModule } from "@angular/forms";
+import {
+  addDoc,
+  collection,
+  deleteDoc,
+  getDocs,
+  getFirestore,
+  orderBy,
+  query,
+} from "firebase/firestore";
+import { firebaseApp } from "./firebase.config";
 
 type Screen = "home" | "phases" | "exercise" | "report";
 
@@ -43,7 +52,10 @@ interface PerformanceRecord {
   score: number;
   totalQuestions: number;
   percent: number;
+  createdAt?: number;
 }
+
+const firestoreDb = getFirestore(firebaseApp);
 
 @Component({
   selector: "app-root",
@@ -59,7 +71,6 @@ export class AppComponent {
   readonly totalQuestions = 20;
   readonly goodPercent = 75;
   readonly excellentPercent = 85;
-  readonly apiBaseUrl = "https://teoria-musical-api.onrender.com";
 
   readonly stages: StageConfig[] = [
     { level: "easy", duration: 4, phase: 1 },
@@ -156,8 +167,6 @@ export class AppComponent {
 
   private timerId?: ReturnType<typeof setTimeout>;
 
-  constructor(private readonly http: HttpClient) {}
-
   get stage(): StageConfig {
     return this.stages[this.stageIndex];
   }
@@ -199,7 +208,7 @@ export class AppComponent {
     }
     this.playerName = name;
     this.showOptions = true;
-    this.refreshPerformanceRecords();
+    void this.refreshPerformanceRecords();
   }
 
   openPhases(levelIdx: number): void {
@@ -211,7 +220,7 @@ export class AppComponent {
     this.clearTimer();
     this.modalVisible = false;
     this.screen = "report";
-    this.refreshPerformanceRecords();
+    void this.refreshPerformanceRecords();
   }
 
   goHome(): void {
@@ -273,15 +282,19 @@ export class AppComponent {
       return;
     }
 
-    this.http.delete(`${this.apiBaseUrl}/api/results`).subscribe({
-      next: () => {
-        this.performanceRecordsData = [];
-        this.reportError = "";
-      },
-      error: () => {
-        this.reportError = "Nao foi possivel limpar o historico no servidor.";
-      },
-    });
+    void this.clearFirestoreRecords();
+  }
+
+  private async clearFirestoreRecords(): Promise<void> {
+    try {
+      const snapshot = await getDocs(collection(firestoreDb, "results"));
+      await Promise.all(snapshot.docs.map((item) => deleteDoc(item.ref)));
+
+      this.performanceRecordsData = [];
+      this.reportError = "";
+    } catch {
+      this.reportError = "Nao foi possivel limpar o historico no Firestore.";
+    }
   }
 
   mainModalAction(): void {
@@ -405,7 +418,7 @@ export class AppComponent {
       isLast,
     };
 
-    this.savePerformanceRecord({
+    void this.savePerformanceRecord({
       timestamp: new Date().toLocaleString("pt-BR"),
       student: this.playerName,
       level: this.levelLabel(this.stage.level),
@@ -558,33 +571,50 @@ export class AppComponent {
     return minVolume + (1 - minVolume) * progress;
   }
 
-  private savePerformanceRecord(record: PerformanceRecord): void {
-    this.http.post(`${this.apiBaseUrl}/api/results`, record).subscribe({
-      next: () => this.refreshPerformanceRecords(),
-      error: () => {
-        this.reportError = "Nao foi possivel salvar o resultado no servidor.";
-      },
-    });
+  private async savePerformanceRecord(
+    record: PerformanceRecord,
+  ): Promise<void> {
+    try {
+      await addDoc(collection(firestoreDb, "results"), {
+        ...record,
+        createdAt: Date.now(),
+      });
+      await this.refreshPerformanceRecords();
+    } catch {
+      this.reportError = "Nao foi possivel salvar o resultado no Firestore.";
+    }
   }
 
-  private refreshPerformanceRecords(): void {
+  private async refreshPerformanceRecords(): Promise<void> {
     this.isReportLoading = true;
     this.reportError = "";
 
-    this.http
-      .get<PerformanceRecord[]>(`${this.apiBaseUrl}/api/results`)
-      .subscribe({
-        next: (records) => {
-          this.performanceRecordsData = Array.isArray(records) ? records : [];
-          this.isReportLoading = false;
-        },
-        error: () => {
-          this.performanceRecordsData = [];
-          this.isReportLoading = false;
-          this.reportError =
-            "Nao foi possivel carregar o relatorio do servidor.";
-        },
+    try {
+      const recordsQuery = query(
+        collection(firestoreDb, "results"),
+        orderBy("createdAt", "desc"),
+      );
+      const snapshot = await getDocs(recordsQuery);
+
+      this.performanceRecordsData = snapshot.docs.map((item) => {
+        const data = item.data() as PerformanceRecord;
+        return {
+          timestamp: data.timestamp ?? "",
+          student: data.student ?? "",
+          level: data.level ?? "",
+          phase: data.phase ?? 0,
+          score: data.score ?? 0,
+          totalQuestions: data.totalQuestions ?? this.totalQuestions,
+          percent: data.percent ?? 0,
+          createdAt: data.createdAt,
+        };
       });
+    } catch {
+      this.performanceRecordsData = [];
+      this.reportError = "Nao foi possivel carregar o relatorio do Firestore.";
+    } finally {
+      this.isReportLoading = false;
+    }
   }
 
   private drawStaff(): void {
