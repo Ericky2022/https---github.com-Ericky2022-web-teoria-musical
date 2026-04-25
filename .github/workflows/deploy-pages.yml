@@ -28,7 +28,7 @@ jobs:
           cache: npm
 
       - name: Install dependencies
-        run: npm ci
+        run: npm install
 
       - name: Build Angular app
         run: npm run build -- --base-href "/https---github.com-Ericky2022-web-teoria-musical/"
