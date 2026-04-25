@@ -59,7 +59,7 @@ export class AppComponent {
   readonly totalQuestions = 20;
   readonly goodPercent = 75;
   readonly excellentPercent = 85;
-  readonly apiBaseUrl = "http://localhost:3001";
+  readonly apiBaseUrl = "https://teoria-musical-api.onrender.com";
 
   readonly stages: StageConfig[] = [
     { level: "easy", duration: 4, phase: 1 },
