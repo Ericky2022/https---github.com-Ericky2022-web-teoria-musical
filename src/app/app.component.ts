@@ -1,8 +1,9 @@
 import { CommonModule } from "@angular/common";
+import { HttpClient } from "@angular/common/http";
 import { Component, ElementRef, ViewChild } from "@angular/core";
 import { FormsModule } from "@angular/forms";
 
-type Screen = "home" | "phases" | "exercise";
+type Screen = "home" | "phases" | "exercise" | "report";
 
 interface MusicNote {
   displayName: string;
@@ -34,6 +35,16 @@ interface ResultState {
   isLast: boolean;
 }
 
+interface PerformanceRecord {
+  timestamp: string;
+  student: string;
+  level: string;
+  phase: number;
+  score: number;
+  totalQuestions: number;
+  percent: number;
+}
+
 @Component({
   selector: "app-root",
   standalone: true,
@@ -48,6 +59,7 @@ export class AppComponent {
   readonly totalQuestions = 20;
   readonly goodPercent = 75;
   readonly excellentPercent = 85;
+  readonly apiBaseUrl = "http://localhost:3001";
 
   readonly stages: StageConfig[] = [
     { level: "easy", duration: 4, phase: 1 },
@@ -123,6 +135,9 @@ export class AppComponent {
 
   modalVisible = false;
   resultState?: ResultState;
+  performanceRecordsData: PerformanceRecord[] = [];
+  isReportLoading = false;
+  reportError = "";
 
   private readonly noteAudioPaths: Record<string, string> = {
     A: "/assets/audio/A.MP3",
@@ -141,6 +156,8 @@ export class AppComponent {
 
   private timerId?: ReturnType<typeof setTimeout>;
 
+  constructor(private readonly http: HttpClient) {}
+
   get stage(): StageConfig {
     return this.stages[this.stageIndex];
   }
@@ -156,6 +173,24 @@ export class AppComponent {
     );
   }
 
+  get performanceCount(): number {
+    return this.performanceRecordsData.length;
+  }
+
+  get performanceRecords(): PerformanceRecord[] {
+    return [...this.performanceRecordsData].reverse();
+  }
+
+  get averagePercent(): number {
+    const records = this.performanceRecordsData;
+    if (records.length === 0) {
+      return 0;
+    }
+
+    const total = records.reduce((sum, record) => sum + record.percent, 0);
+    return total / records.length;
+  }
+
   startTraining(): void {
     const name = this.playerNameInput.trim();
     if (!name) {
@@ -164,11 +199,19 @@ export class AppComponent {
     }
     this.playerName = name;
     this.showOptions = true;
+    this.refreshPerformanceRecords();
   }
 
   openPhases(levelIdx: number): void {
     this.selectedLevelIndex = levelIdx;
     this.screen = "phases";
+  }
+
+  openReport(): void {
+    this.clearTimer();
+    this.modalVisible = false;
+    this.screen = "report";
+    this.refreshPerformanceRecords();
   }
 
   goHome(): void {
@@ -223,6 +266,22 @@ export class AppComponent {
   retryCurrent(): void {
     this.modalVisible = false;
     this.startExercise(this.stageIndex);
+  }
+
+  clearPerformanceData(): void {
+    if (!confirm("Deseja apagar todo o histórico salvo?")) {
+      return;
+    }
+
+    this.http.delete(`${this.apiBaseUrl}/api/results`).subscribe({
+      next: () => {
+        this.performanceRecordsData = [];
+        this.reportError = "";
+      },
+      error: () => {
+        this.reportError = "Nao foi possivel limpar o historico no servidor.";
+      },
+    });
   }
 
   mainModalAction(): void {
@@ -324,11 +383,14 @@ export class AppComponent {
       percent >= this.goodPercent && percent < this.excellentPercent;
     const isLast = this.stageIndex >= this.stages.length - 1;
 
-    const statusText = isBad
-      ? "Recomendo você continuar estudando."
-      : isGood
-        ? "Muito bom! Você pode tentar novamente ou prosseguir para o próximo exercício."
-        : "Parabéns! Você está indo muito bem, pode prosseguir para o próximo nível.";
+    let statusText =
+      "Parabéns! Você está indo muito bem, pode prosseguir para o próximo nível.";
+    if (isBad) {
+      statusText = "Recomendo você continuar estudando.";
+    } else if (isGood) {
+      statusText =
+        "Muito bom! Você pode tentar novamente ou prosseguir para o próximo exercício.";
+    }
 
     this.resultState = {
       title: isBad ? "Continue praticando" : "Resultado da fase",
@@ -342,6 +404,16 @@ export class AppComponent {
       isGood,
       isLast,
     };
+
+    this.savePerformanceRecord({
+      timestamp: new Date().toLocaleString("pt-BR"),
+      student: this.playerName,
+      level: this.levelLabel(this.stage.level),
+      phase: this.stage.phase,
+      score: this.score,
+      totalQuestions: this.totalQuestions,
+      percent,
+    });
 
     this.modalVisible = true;
   }
@@ -478,6 +550,35 @@ export class AppComponent {
     const minVolume = 0.25;
     const progress = (currentTick - 1) / (totalTicks - 1);
     return minVolume + (1 - minVolume) * progress;
+  }
+
+  private savePerformanceRecord(record: PerformanceRecord): void {
+    this.http.post(`${this.apiBaseUrl}/api/results`, record).subscribe({
+      next: () => this.refreshPerformanceRecords(),
+      error: () => {
+        this.reportError = "Nao foi possivel salvar o resultado no servidor.";
+      },
+    });
+  }
+
+  private refreshPerformanceRecords(): void {
+    this.isReportLoading = true;
+    this.reportError = "";
+
+    this.http
+      .get<PerformanceRecord[]>(`${this.apiBaseUrl}/api/results`)
+      .subscribe({
+        next: (records) => {
+          this.performanceRecordsData = Array.isArray(records) ? records : [];
+          this.isReportLoading = false;
+        },
+        error: () => {
+          this.performanceRecordsData = [];
+          this.isReportLoading = false;
+          this.reportError =
+            "Nao foi possivel carregar o relatorio do servidor.";
+        },
+      });
   }
 
   private drawStaff(): void {

@@ -30,6 +30,7 @@
       <div class="card info-card">
         <strong>Aluno: {{ playerName }}</strong>
         <p>Escolha qualquer nível para testar as fases.</p>
+        <p>Registros salvos: {{ performanceCount }}</p>
       </div>
 
       <div class="level-card" (click)="openPhases(0)">
@@ -55,9 +56,82 @@
         </div>
         <span class="arrow">›</span>
       </div>
+
+      <div class="report-actions">
+        <button class="btn btn-secondary btn-full" (click)="openReport()">
+          Ver relatório
+        </button>
+        <button
+          class="btn btn-secondary btn-full"
+          (click)="clearPerformanceData()"
+        >
+          Limpar histórico
+        </button>
+      </div>
     </div>
 
     <footer>Objetivo: identificar a nota no pentagrama e reforçar ritmo</footer>
+  </div>
+</div>
+
+<div class="screen" [class.active]="screen === 'report'">
+  <div class="bg-pattern"></div>
+  <div class="container">
+    <button class="btn-back" (click)="goHome()">← Voltar</button>
+    <h2>Relatório de desempenho</h2>
+
+    <div class="card info-card" *ngIf="isReportLoading">
+      <strong>Carregando...</strong>
+      <p>Buscando dados no servidor.</p>
+    </div>
+
+    <div class="card info-card" *ngIf="reportError">
+      <strong>Falha ao carregar</strong>
+      <p>{{ reportError }}</p>
+    </div>
+
+    <div
+      class="card info-card"
+      *ngIf="!isReportLoading && !reportError && performanceCount === 0"
+    >
+      <strong>Sem registros ainda</strong>
+      <p>
+        O relatório será preenchido automaticamente quando os alunos concluírem
+        as fases.
+      </p>
+    </div>
+
+    <div
+      class="report-summary"
+      *ngIf="!isReportLoading && performanceCount > 0"
+    >
+      <div class="card report-metric">
+        <strong>Total de registros</strong>
+        <span>{{ performanceCount }}</span>
+      </div>
+      <div class="card report-metric">
+        <strong>Média geral</strong>
+        <span>{{ averagePercent.toFixed(1) }}%</span>
+      </div>
+    </div>
+
+    <div class="report-list" *ngIf="!isReportLoading && performanceCount > 0">
+      <div class="report-row report-row-head">
+        <span>Data</span>
+        <span>Aluno</span>
+        <span>Nível/Fase</span>
+        <span>Acertos</span>
+        <span>%</span>
+      </div>
+
+      <div class="report-row" *ngFor="let record of performanceRecords">
+        <span>{{ record.timestamp }}</span>
+        <span>{{ record.student }}</span>
+        <span>{{ record.level }} - F{{ record.phase }}</span>
+        <span>{{ record.score }}/{{ record.totalQuestions }}</span>
+        <span>{{ record.percent.toFixed(1) }}%</span>
+      </div>
+    </div>
   </div>
 </div>
 

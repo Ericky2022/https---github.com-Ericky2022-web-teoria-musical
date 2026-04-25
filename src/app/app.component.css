@@ -170,6 +170,60 @@ input[type="text"]:focus {
   transform: translateY(-2px);
 }
 
+.report-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.report-summary {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.report-metric strong {
+  display: block;
+  font-size: 14px;
+  color: #33415c;
+}
+
+.report-metric span {
+  display: block;
+  margin-top: 4px;
+  font-size: 24px;
+  font-weight: 800;
+  color: #005f73;
+}
+
+.report-list {
+  background: rgba(255, 255, 255, 0.94);
+  border-radius: 14px;
+  border: 1.5px solid rgba(0, 95, 115, 0.2);
+  overflow: hidden;
+}
+
+.report-row {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr 1.2fr 0.8fr 0.6fr;
+  gap: 10px;
+  align-items: center;
+  padding: 10px 12px;
+  border-bottom: 1px solid #e6eef2;
+  font-size: 13px;
+}
+
+.report-row:last-child {
+  border-bottom: none;
+}
+
+.report-row-head {
+  background: #e0f1f5;
+  font-weight: 800;
+  color: #0d1b2a;
+}
+
 .level-mid {
   border-color: rgba(10, 147, 150, 0.3);
 }
@@ -414,6 +468,15 @@ canvas {
 @media (max-width: 400px) {
   h1 {
     font-size: 23px;
+  }
+
+  .report-row {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+
+  .report-row span {
+    display: block;
   }
 
   .btn-note {
