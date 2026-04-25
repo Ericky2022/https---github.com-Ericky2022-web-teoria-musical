@@ -140,17 +140,17 @@ export class AppComponent {
   reportError = "";
 
   private readonly noteAudioPaths: Record<string, string> = {
-    A: "/assets/audio/A.MP3",
-    B: "/assets/audio/B.MP3",
-    C: "/assets/audio/C.mp3",
-    D: "/assets/audio/D.mp3",
-    E: "/assets/audio/E.mp3",
-    F: "/assets/audio/F.mp3",
-    G: "/assets/audio/G.mp3",
+    A: "assets/audio/A.MP3",
+    B: "assets/audio/B.MP3",
+    C: "assets/audio/C.mp3",
+    D: "assets/audio/D.mp3",
+    E: "assets/audio/E.mp3",
+    F: "assets/audio/F.mp3",
+    G: "assets/audio/G.mp3",
   };
 
-  private readonly errorAudioPath = "/assets/audio/error.mp3";
-  private readonly countdownAudioPath = "/assets/audio/contagem.wav";
+  private readonly errorAudioPath = "assets/audio/error.mp3";
+  private readonly countdownAudioPath = "assets/audio/contagem.wav";
 
   private readonly audioCache = new Map<string, HTMLAudioElement>();
 
@@ -517,12 +517,13 @@ export class AppComponent {
   }
 
   private playAudio(audioPath: string, volume = 1): void {
-    let audio = this.audioCache.get(audioPath);
+    const resolvedAudioPath = this.resolveAssetUrl(audioPath);
+    let audio = this.audioCache.get(resolvedAudioPath);
 
     if (!audio) {
-      audio = new Audio(audioPath);
+      audio = new Audio(resolvedAudioPath);
       audio.preload = "auto";
-      this.audioCache.set(audioPath, audio);
+      this.audioCache.set(resolvedAudioPath, audio);
     }
 
     audio.volume = Math.max(0, Math.min(1, volume));
@@ -533,13 +534,18 @@ export class AppComponent {
   }
 
   private stopAudio(audioPath: string): void {
-    const audio = this.audioCache.get(audioPath);
+    const resolvedAudioPath = this.resolveAssetUrl(audioPath);
+    const audio = this.audioCache.get(resolvedAudioPath);
     if (!audio) {
       return;
     }
 
     audio.pause();
     audio.currentTime = 0;
+  }
+
+  private resolveAssetUrl(relativePath: string): string {
+    return new URL(relativePath, document.baseURI).toString();
   }
 
   private getCountdownVolume(currentTick: number, totalTicks: number): number {
