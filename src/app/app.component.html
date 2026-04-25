@@ -1,0 +1,166 @@
+<div class="screen" [class.active]="screen === 'home'">
+  <div class="bg-pattern"></div>
+  <div class="container">
+    <h1>Treino de Teoria Musical</h1>
+    <p class="subtitle">Informe seu nome e comece pelo nível Inicial</p>
+
+    <div class="card">
+      <input
+        type="text"
+        [(ngModel)]="playerNameInput"
+        placeholder="Digite seu nome aqui"
+        maxlength="50"
+      />
+    </div>
+
+    <div class="card info-card" *ngIf="!showOptions">
+      <strong>Ordem das fases</strong>
+      <p>Inicial (4 tempos) → Intermediário (2 tempos) → Avançado (1 tempo)</p>
+    </div>
+
+    <button
+      class="btn btn-primary btn-full"
+      *ngIf="!showOptions"
+      (click)="startTraining()"
+    >
+      Começar treino
+    </button>
+
+    <div *ngIf="showOptions">
+      <div class="card info-card">
+        <strong>Aluno: {{ playerName }}</strong>
+        <p>Escolha qualquer nível para testar as fases.</p>
+      </div>
+
+      <div class="level-card" (click)="openPhases(0)">
+        <div class="level-info">
+          <span class="level-title">Inicial</span>
+          <span class="level-sub">4 tempos</span>
+        </div>
+        <span class="arrow">›</span>
+      </div>
+
+      <div class="level-card level-mid" (click)="openPhases(1)">
+        <div class="level-info">
+          <span class="level-title">Intermediário</span>
+          <span class="level-sub">2 tempos</span>
+        </div>
+        <span class="arrow">›</span>
+      </div>
+
+      <div class="level-card level-hard" (click)="openPhases(2)">
+        <div class="level-info">
+          <span class="level-title">Avançado</span>
+          <span class="level-sub">1 tempo</span>
+        </div>
+        <span class="arrow">›</span>
+      </div>
+    </div>
+
+    <footer>Objetivo: identificar a nota no pentagrama e reforçar ritmo</footer>
+  </div>
+</div>
+
+<div class="screen" [class.active]="screen === 'phases'">
+  <div class="bg-pattern"></div>
+  <div class="container">
+    <button class="btn-back" (click)="goHome()">← Voltar</button>
+    <h2>{{ levels[selectedLevelIndex].title }}</h2>
+    <p class="subtitle">
+      Duração: {{ levels[selectedLevelIndex].durationLabel }} por nota
+    </p>
+
+    <div
+      class="phase-card"
+      *ngFor="let phase of levels[selectedLevelIndex].phases; let i = index"
+      (click)="startExercise(levels[selectedLevelIndex].stageStart + i)"
+    >
+      <div
+        class="phase-number"
+        [style.background]="levels[selectedLevelIndex].accentColor"
+      >
+        {{ i + 1 }}
+      </div>
+      <div class="phase-desc">{{ phase }}</div>
+    </div>
+  </div>
+</div>
+
+<div class="screen" [class.active]="screen === 'exercise'">
+  <div class="bg-pattern"></div>
+  <div class="container exercise-container" *ngIf="currentNote">
+    <div class="exercise-header">
+      <div>
+        <span class="ex-level-phase">{{ levelPhaseLabel }}</span>
+        <span class="ex-student">Aluno: {{ playerName }}</span>
+      </div>
+      <div class="ex-meta">
+        <span>Exercício {{ currentQuestion }} de {{ totalQuestions }}</span>
+        <span>Pontuação: {{ score }}</span>
+      </div>
+    </div>
+
+    <div class="counter-row">
+      <span class="counter">{{ counter }}/{{ stage.duration }}</span>
+      <div class="counter-bar-outer">
+        <div class="counter-bar" [style.width.%]="counterPercent"></div>
+      </div>
+    </div>
+
+    <div class="rhythm-label">{{ currentNote.rhythmLabel }}</div>
+
+    <div class="staff-card">
+      <canvas #staffCanvas width="500" height="220"></canvas>
+    </div>
+
+    <p class="question-text">Qual é a nota?</p>
+
+    <div class="options-grid">
+      <button
+        class="btn btn-note"
+        *ngFor="let option of options"
+        [disabled]="isAnswered"
+        (click)="checkAnswer(option)"
+      >
+        {{ option }}
+      </button>
+    </div>
+
+    <div
+      class="feedback-card"
+      *ngIf="feedback"
+      [class.correct]="feedbackCorrect"
+      [class.wrong]="!feedbackCorrect"
+    >
+      {{ feedback }}
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" *ngIf="modalVisible && resultState">
+  <div class="modal">
+    <h2>{{ resultState.title }}</h2>
+    <p>{{ resultState.content }}</p>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" (click)="closeModalToPhases()">
+        Voltar ao menu de fases
+      </button>
+      <button
+        class="btn btn-secondary"
+        *ngIf="resultState.isGood"
+        (click)="retryCurrent()"
+      >
+        Tentar novamente
+      </button>
+      <button class="btn btn-primary" (click)="mainModalAction()">
+        {{
+          resultState.isBad
+            ? "Jogar novamente"
+            : resultState.isLast
+              ? "Finalizar"
+              : "Próximo exercício"
+        }}
+      </button>
+    </div>
+  </div>
+</div>
