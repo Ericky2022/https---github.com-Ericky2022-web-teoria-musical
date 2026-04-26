@@ -151,13 +151,18 @@ export class AppComponent {
   reportError = "";
 
   private readonly noteAudioPaths: Record<string, string> = {
-    A: "assets/audio/A.MP3",
-    B: "assets/audio/B.MP3",
-    C: "assets/audio/C.mp3",
-    D: "assets/audio/D.mp3",
-    E: "assets/audio/E.mp3",
-    F: "assets/audio/F.mp3",
-    G: "assets/audio/G.mp3",
+    C1: "assets/audio/C1.MP3",
+    D1: "assets/audio/D1.MP3",
+    E1: "assets/audio/E1.MP3",
+    F1: "assets/audio/F1.MP3",
+    G1: "assets/audio/G1.MP3",
+    A1: "assets/audio/A1.MP3",
+    B1: "assets/audio/B1.MP3",
+    C2: "assets/audio/C2.MP3",
+    D2: "assets/audio/D2.MP3",
+    E2: "assets/audio/E2.MP3",
+    F2: "assets/audio/F2.MP3",
+    G2: "assets/audio/G2.MP3",
   };
 
   private readonly errorAudioPath = "assets/audio/error.mp3";
@@ -457,45 +462,45 @@ export class AppComponent {
     switch (phase) {
       case 1:
         return [
-          note("Dó", "C", -2),
-          note("Ré", "D", -1),
-          note("Mi", "E", 0),
-          note("Fá", "F", 1),
-          note("Sol", "G", 2),
+          note("Dó", "C1", -2),
+          note("Ré", "D1", -1),
+          note("Mi", "E1", 0),
+          note("Fá", "F1", 1),
+          note("Sol", "G1", 2),
         ];
       case 2:
         return [
-          note("Dó", "C", -2),
-          note("Ré", "D", -1),
-          note("Mi", "E", 0),
-          note("Fá", "F", 1),
-          note("Sol", "G", 2),
-          note("Lá", "A", 3),
-          note("Si", "B", 4),
-          note("Dó", "C", 5),
+          note("Dó", "C1", -2),
+          note("Ré", "D1", -1),
+          note("Mi", "E1", 0),
+          note("Fá", "F1", 1),
+          note("Sol", "G1", 2),
+          note("Lá", "A1", 3),
+          note("Si", "B1", 4),
+          note("Dó", "C2", 5),
         ];
       case 3:
         return [
-          note("Dó", "C", 5),
-          note("Ré", "D", 6),
-          note("Mi", "E", 7),
-          note("Fá", "F", 8),
-          note("Sol", "G", 9),
+          note("Dó", "C2", 5),
+          note("Ré", "D2", 6),
+          note("Mi", "E2", 7),
+          note("Fá", "F2", 8),
+          note("Sol", "G2", 9),
         ];
       case 4:
         return [
-          note("Dó", "C", -2),
-          note("Ré", "D", -1),
-          note("Mi", "E", 0),
-          note("Fá", "F", 1),
-          note("Sol", "G", 2),
-          note("Lá", "A", 3),
-          note("Si", "B", 4),
-          note("Dó", "C", 5),
-          note("Ré", "D", 6),
-          note("Mi", "E", 7),
-          note("Fá", "F", 8),
-          note("Sol", "G", 9),
+          note("Dó", "C1", -2),
+          note("Ré", "D1", -1),
+          note("Mi", "E1", 0),
+          note("Fá", "F1", 1),
+          note("Sol", "G1", 2),
+          note("Lá", "A1", 3),
+          note("Si", "B1", 4),
+          note("Dó", "C2", 5),
+          note("Ré", "D2", 6),
+          note("Mi", "E2", 7),
+          note("Fá", "F2", 8),
+          note("Sol", "G2", 9),
         ];
       default:
         return [];
