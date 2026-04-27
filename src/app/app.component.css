@@ -152,11 +152,14 @@ input[type="text"]:focus {
 }
 
 .level-card {
+  width: 100%;
   background: rgba(255, 255, 255, 0.92);
   border-radius: 18px;
   padding: 14px 18px;
   display: flex;
   align-items: center;
+  text-align: left;
+  font: inherit;
   cursor: pointer;
   transition:
     box-shadow 0.15s,
@@ -232,6 +235,10 @@ input[type="text"]:focus {
   border-color: rgba(155, 34, 38, 0.3);
 }
 
+.level-ear {
+  border-color: rgba(44, 126, 74, 0.35);
+}
+
 .level-info {
   flex: 1;
 }
@@ -255,12 +262,15 @@ input[type="text"]:focus {
 }
 
 .phase-card {
+  width: 100%;
   background: rgba(255, 255, 255, 0.92);
   border-radius: 14px;
   padding: 14px 18px;
   display: flex;
   align-items: center;
   gap: 14px;
+  text-align: left;
+  font: inherit;
   cursor: pointer;
   border: 1.5px solid rgba(0, 95, 115, 0.2);
   margin-top: 10px;
@@ -285,6 +295,10 @@ input[type="text"]:focus {
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+}
+
+.ear-number {
+  background: #2c7e4a;
 }
 
 .phase-desc {
@@ -369,6 +383,16 @@ input[type="text"]:focus {
   padding: 10px;
   display: flex;
   justify-content: center;
+}
+
+.staff-card.correct {
+  border-color: #2d6a4f;
+  background: rgba(45, 106, 79, 0.08);
+}
+
+.staff-card.wrong {
+  border-color: #9b2226;
+  background: rgba(155, 34, 38, 0.08);
 }
 
 canvas {

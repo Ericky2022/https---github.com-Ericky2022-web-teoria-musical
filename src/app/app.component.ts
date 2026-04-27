@@ -12,14 +12,20 @@ import {
 } from "firebase/firestore";
 import { firebaseApp } from "./firebase.config";
 
-type Screen = "home" | "phases" | "exercise" | "report";
+type Screen = "home" | "phases" | "exercise" | "report" | "ear-menu";
 
 interface MusicNote {
   displayName: string;
+  answerLabel: string;
   audioKey: string;
   duration: number;
   staffStep: number;
   rhythmLabel: string;
+}
+
+interface EarRangeConfig {
+  label: string;
+  notes: MusicNote[];
 }
 
 interface StageConfig {
@@ -132,6 +138,10 @@ export class AppComponent {
   showOptions = false;
 
   selectedLevelIndex = 0;
+  earRangeIndex = 0;
+  isEarMode = false;
+
+  readonly earRanges: EarRangeConfig[] = this.buildEarRanges();
 
   stageIndex = 0;
   notes: MusicNote[] = [];
@@ -177,14 +187,30 @@ export class AppComponent {
   }
 
   get levelPhaseLabel(): string {
+    if (this.isEarMode) {
+      return `Teste de ouvido - ${this.earRanges[this.earRangeIndex].label}`;
+    }
+
     return `${this.levelLabel(this.stage.level)} - Fase ${this.stage.phase}`;
   }
 
   get counterPercent(): number {
+    if (this.isEarMode) {
+      return 0;
+    }
+
     return Math.max(
       0,
       Math.min(100, (this.counter / this.stage.duration) * 100),
     );
+  }
+
+  get currentOptions(): string[] {
+    if (this.isEarMode) {
+      return this.notes.map((item) => item.answerLabel);
+    }
+
+    return this.options;
   }
 
   get performanceCount(): number {
@@ -221,6 +247,12 @@ export class AppComponent {
     this.screen = "phases";
   }
 
+  openEarMenu(): void {
+    this.clearTimer();
+    this.modalVisible = false;
+    this.screen = "ear-menu";
+  }
+
   openReport(): void {
     this.clearTimer();
     this.modalVisible = false;
@@ -237,8 +269,24 @@ export class AppComponent {
   startExercise(stageIndex: number): void {
     this.clearTimer();
     this.modalVisible = false;
+    this.isEarMode = false;
     this.stageIndex = stageIndex;
     this.notes = this.getNotesByPhase(this.stage.phase, this.stage.duration);
+    this.currentQuestion = 1;
+    this.score = 0;
+    this.isAnswered = false;
+    this.feedback = "";
+    this.counter = 0;
+    this.screen = "exercise";
+    this.generateQuestion();
+  }
+
+  startEarExercise(rangeIndex: number): void {
+    this.clearTimer();
+    this.modalVisible = false;
+    this.isEarMode = true;
+    this.earRangeIndex = rangeIndex;
+    this.notes = this.earRanges[rangeIndex].notes;
     this.currentQuestion = 1;
     this.score = 0;
     this.isAnswered = false;
@@ -256,30 +304,57 @@ export class AppComponent {
     this.clearTimer();
     this.isAnswered = true;
 
-    const correct = selected === this.currentNote.displayName;
+    const correct = selected === this.currentNote.answerLabel;
+    let feedbackAudio: Promise<void>;
+
     if (correct) {
       this.score++;
-      this.playNoteAudio(this.currentNote.audioKey);
+      feedbackAudio = this.playNoteAudio(
+        this.currentNote.audioKey,
+        this.isEarMode,
+      );
     } else {
-      this.playAudio(this.errorAudioPath);
+      feedbackAudio = this.playAudio(this.errorAudioPath, 1, this.isEarMode);
     }
 
     this.feedbackCorrect = correct;
     this.feedback = correct
       ? "Acertou!"
-      : `Errou! Resposta correta: ${this.currentNote.displayName}`;
+      : `Errou! Resposta correta: ${this.currentNote.answerLabel}`;
+
+    if (this.isEarMode) {
+      setTimeout(() => this.drawStaff(), 0);
+    }
+
+    if (this.isEarMode) {
+      void feedbackAudio.finally(() => this.moveToNext());
+      return;
+    }
 
     setTimeout(() => this.moveToNext(), 1000);
   }
 
   closeModalToPhases(): void {
     this.modalVisible = false;
-    this.screen = "phases";
+    this.screen = this.isEarMode ? "ear-menu" : "phases";
   }
 
   retryCurrent(): void {
     this.modalVisible = false;
+    if (this.isEarMode) {
+      this.startEarExercise(this.earRangeIndex);
+      return;
+    }
+
     this.startExercise(this.stageIndex);
+  }
+
+  replayCurrentNote(): void {
+    if (!this.currentNote || this.isAnswered) {
+      return;
+    }
+
+    void this.playNoteAudio(this.currentNote.audioKey);
   }
 
   clearPerformanceData(): void {
@@ -310,7 +385,17 @@ export class AppComponent {
     this.modalVisible = false;
 
     if (this.resultState.isBad) {
+      if (this.isEarMode) {
+        this.startEarExercise(this.earRangeIndex);
+        return;
+      }
+
       this.startExercise(this.stageIndex);
+      return;
+    }
+
+    if (this.isEarMode) {
+      this.openEarMenu();
       return;
     }
 
@@ -323,12 +408,12 @@ export class AppComponent {
   }
 
   private generateQuestion(): void {
-    const previousName = this.currentNote?.displayName;
+    const previousAudioKey = this.currentNote?.audioKey;
     let next = this.notes[Math.floor(Math.random() * this.notes.length)];
 
-    if (this.notes.length > 1 && previousName) {
+    if (this.notes.length > 1 && previousAudioKey) {
       let guard = 0;
-      while (next.displayName === previousName && guard < 20) {
+      while (next.audioKey === previousAudioKey && guard < 20) {
         next = this.notes[Math.floor(Math.random() * this.notes.length)];
         guard++;
       }
@@ -340,6 +425,12 @@ export class AppComponent {
     this.counter = 0;
 
     setTimeout(() => this.drawStaff(), 0);
+
+    if (this.isEarMode) {
+      void this.playNoteAudio(next.audioKey);
+      return;
+    }
+
     this.startTimer();
   }
 
@@ -376,7 +467,7 @@ export class AppComponent {
 
     this.isAnswered = true;
     this.feedbackCorrect = false;
-    this.feedback = `Tempo esgotado! Resposta correta: ${this.currentNote.displayName}`;
+    this.feedback = `Tempo esgotado! Resposta correta: ${this.currentNote.answerLabel}`;
     this.playAudio(this.errorAudioPath);
 
     setTimeout(() => this.moveToNext(), 1000);
@@ -399,7 +490,7 @@ export class AppComponent {
     const isBad = percent < this.goodPercent;
     const isGood =
       percent >= this.goodPercent && percent < this.excellentPercent;
-    const isLast = this.stageIndex >= this.stages.length - 1;
+    const isLast = this.isEarMode || this.stageIndex >= this.stages.length - 1;
 
     let statusText =
       "Parabéns! Você está indo muito bem, pode prosseguir para o próximo nível.";
@@ -426,8 +517,10 @@ export class AppComponent {
     void this.savePerformanceRecord({
       timestamp: new Date().toLocaleString("pt-BR"),
       student: this.playerName,
-      level: this.levelLabel(this.stage.level),
-      phase: this.stage.phase,
+      level: this.isEarMode
+        ? "Teste de ouvido"
+        : this.levelLabel(this.stage.level),
+      phase: this.isEarMode ? this.earRangeIndex + 1 : this.stage.phase,
       score: this.score,
       totalQuestions: this.totalQuestions,
       percent,
@@ -453,6 +546,7 @@ export class AppComponent {
       staffStep: number,
     ): MusicNote => ({
       displayName,
+      answerLabel: displayName,
       audioKey,
       duration,
       staffStep,
@@ -507,6 +601,118 @@ export class AppComponent {
     }
   }
 
+  private buildEarRanges(): EarRangeConfig[] {
+    const duration = 1;
+    const rhythmLabel = "Teste de ouvido";
+
+    const allNotes: MusicNote[] = [
+      {
+        displayName: "Dó1",
+        answerLabel: "Dó1",
+        audioKey: "C1",
+        duration,
+        staffStep: -2,
+        rhythmLabel,
+      },
+      {
+        displayName: "Ré1",
+        answerLabel: "Ré1",
+        audioKey: "D1",
+        duration,
+        staffStep: -1,
+        rhythmLabel,
+      },
+      {
+        displayName: "Mi1",
+        answerLabel: "Mi1",
+        audioKey: "E1",
+        duration,
+        staffStep: 0,
+        rhythmLabel,
+      },
+      {
+        displayName: "Fá1",
+        answerLabel: "Fá1",
+        audioKey: "F1",
+        duration,
+        staffStep: 1,
+        rhythmLabel,
+      },
+      {
+        displayName: "Sol1",
+        answerLabel: "Sol1",
+        audioKey: "G1",
+        duration,
+        staffStep: 2,
+        rhythmLabel,
+      },
+      {
+        displayName: "Lá1",
+        answerLabel: "Lá1",
+        audioKey: "A1",
+        duration,
+        staffStep: 3,
+        rhythmLabel,
+      },
+      {
+        displayName: "Si1",
+        answerLabel: "Si1",
+        audioKey: "B1",
+        duration,
+        staffStep: 4,
+        rhythmLabel,
+      },
+      {
+        displayName: "Dó2",
+        answerLabel: "Dó2",
+        audioKey: "C2",
+        duration,
+        staffStep: 5,
+        rhythmLabel,
+      },
+      {
+        displayName: "Ré2",
+        answerLabel: "Ré2",
+        audioKey: "D2",
+        duration,
+        staffStep: 6,
+        rhythmLabel,
+      },
+      {
+        displayName: "Mi2",
+        answerLabel: "Mi2",
+        audioKey: "E2",
+        duration,
+        staffStep: 7,
+        rhythmLabel,
+      },
+      {
+        displayName: "Fá2",
+        answerLabel: "Fá2",
+        audioKey: "F2",
+        duration,
+        staffStep: 8,
+        rhythmLabel,
+      },
+      {
+        displayName: "Sol2",
+        answerLabel: "Sol2",
+        audioKey: "G2",
+        duration,
+        staffStep: 9,
+        rhythmLabel,
+      },
+    ];
+
+    return allNotes
+      .map((_, idx) => ({ idx, notes: allNotes.slice(0, idx + 1) }))
+      .filter((item) => item.idx >= 1)
+      .map((item) => ({
+        label: `Dó1 a ${allNotes[item.idx].displayName}`,
+        notes: item.notes,
+      }));
+  }
+
   private rhythmLabel(duration: number): string {
     if (duration === 4) {
       return "Semibreve (4 tempos)";
@@ -526,15 +732,20 @@ export class AppComponent {
     this.stopAudio(this.countdownAudioPath);
   }
 
-  private playNoteAudio(audioKey: string): void {
+  private playNoteAudio(audioKey: string, waitForEnd = false): Promise<void> {
     const audioPath = this.noteAudioPaths[audioKey];
     if (!audioPath) {
-      return;
+      return Promise.resolve();
     }
-    this.playAudio(audioPath);
+
+    return this.playAudio(audioPath, 1, waitForEnd);
   }
 
-  private playAudio(audioPath: string, volume = 1): void {
+  private playAudio(
+    audioPath: string,
+    volume = 1,
+    waitForEnd = false,
+  ): Promise<void> {
     const resolvedAudioPath = this.resolveAssetUrl(audioPath);
     let audio = this.audioCache.get(resolvedAudioPath);
 
@@ -546,8 +757,26 @@ export class AppComponent {
 
     audio.volume = Math.max(0, Math.min(1, volume));
     audio.currentTime = 0;
-    void audio.play().catch(() => {
-      // Ignora falhas de autoplay para não quebrar o fluxo do exercício.
+
+    if (!waitForEnd) {
+      void audio.play().catch(() => {
+        // Ignora falhas de autoplay para não quebrar o fluxo do exercício.
+      });
+      return Promise.resolve();
+    }
+
+    return new Promise((resolve) => {
+      const onEnded = () => resolve();
+      const onError = () => resolve();
+
+      audio.addEventListener("ended", onEnded, { once: true });
+      audio.addEventListener("error", onError, { once: true });
+
+      void audio.play().catch(() => {
+        audio.removeEventListener("ended", onEnded);
+        audio.removeEventListener("error", onError);
+        resolve();
+      });
     });
   }
 
@@ -639,10 +868,11 @@ export class AppComponent {
     const right = width - 24;
     const top = 55;
     const spacing = 22;
+    const feedbackColor = this.getStaffFeedbackColor();
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    ctx.strokeStyle = "#1a1a1a";
+    ctx.strokeStyle = feedbackColor;
     ctx.lineWidth = 2;
     for (let i = 0; i < 5; i++) {
       const y = top + i * spacing;
@@ -652,7 +882,7 @@ export class AppComponent {
       ctx.stroke();
     }
 
-    ctx.fillStyle = "#0d1b2a";
+    ctx.fillStyle = feedbackColor;
     ctx.font = "152px serif";
     const gLineY = top + 3 * spacing;
     ctx.fillText("𝄞", left - 8, gLineY + 30);
@@ -686,8 +916,8 @@ export class AppComponent {
 
     ctx.save();
     ctx.translate(noteX, noteY);
-    ctx.strokeStyle = "#111";
-    ctx.fillStyle = "#111";
+    ctx.strokeStyle = feedbackColor;
+    ctx.fillStyle = feedbackColor;
     ctx.lineWidth = 2;
 
     if (note.duration === 4) {
@@ -712,5 +942,13 @@ export class AppComponent {
       ctx.lineTo(noteX + 15, noteY - 60);
       ctx.stroke();
     }
+  }
+
+  private getStaffFeedbackColor(): string {
+    if (!this.isEarMode || !this.isAnswered) {
+      return "#111";
+    }
+
+    return this.feedbackCorrect ? "#2d6a4f" : "#9b2226";
   }
 }

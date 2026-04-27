@@ -33,29 +33,37 @@
         <p>Registros salvos: {{ performanceCount }}</p>
       </div>
 
-      <div class="level-card" (click)="openPhases(0)">
+      <button class="level-card" (click)="openPhases(0)">
         <div class="level-info">
           <span class="level-title">Inicial</span>
           <span class="level-sub">4 tempos</span>
         </div>
         <span class="arrow">›</span>
-      </div>
+      </button>
 
-      <div class="level-card level-mid" (click)="openPhases(1)">
+      <button class="level-card level-mid" (click)="openPhases(1)">
         <div class="level-info">
           <span class="level-title">Intermediário</span>
           <span class="level-sub">2 tempos</span>
         </div>
         <span class="arrow">›</span>
-      </div>
+      </button>
 
-      <div class="level-card level-hard" (click)="openPhases(2)">
+      <button class="level-card level-hard" (click)="openPhases(2)">
         <div class="level-info">
           <span class="level-title">Avançado</span>
           <span class="level-sub">1 tempo</span>
         </div>
         <span class="arrow">›</span>
-      </div>
+      </button>
+
+      <button class="level-card level-ear" (click)="openEarMenu()">
+        <div class="level-info">
+          <span class="level-title">Teste de ouvido</span>
+          <span class="level-sub">Dó1 até Sol2</span>
+        </div>
+        <span class="arrow">›</span>
+      </button>
 
       <div class="report-actions">
         <button class="btn btn-secondary btn-full" (click)="openReport()">
@@ -144,7 +152,7 @@
       Duração: {{ levels[selectedLevelIndex].durationLabel }} por nota
     </p>
 
-    <div
+    <button
       class="phase-card"
       *ngFor="let phase of levels[selectedLevelIndex].phases; let i = index"
       (click)="startExercise(levels[selectedLevelIndex].stageStart + i)"
@@ -156,13 +164,20 @@
         {{ i + 1 }}
       </div>
       <div class="phase-desc">{{ phase }}</div>
-    </div>
+    </button>
   </div>
 </div>
 
 <div class="screen" [class.active]="screen === 'exercise'">
   <div class="bg-pattern"></div>
   <div class="container exercise-container" *ngIf="currentNote">
+    <button
+      class="btn-back"
+      (click)="isEarMode ? openEarMenu() : closeModalToPhases()"
+    >
+      ← Voltar
+    </button>
+
     <div class="exercise-header">
       <div>
         <span class="ex-level-phase">{{ levelPhaseLabel }}</span>
@@ -174,7 +189,7 @@
       </div>
     </div>
 
-    <div class="counter-row">
+    <div class="counter-row" *ngIf="!isEarMode">
       <span class="counter">{{ counter }}/{{ stage.duration }}</span>
       <div class="counter-bar-outer">
         <div class="counter-bar" [style.width.%]="counterPercent"></div>
@@ -183,16 +198,31 @@
 
     <div class="rhythm-label">{{ currentNote.rhythmLabel }}</div>
 
-    <div class="staff-card">
+    <button
+      class="btn btn-secondary"
+      *ngIf="isEarMode"
+      (click)="replayCurrentNote()"
+    >
+      Ouvir nota novamente
+    </button>
+
+    <div
+      class="staff-card"
+      *ngIf="!isEarMode || isAnswered"
+      [class.correct]="isEarMode && isAnswered && feedbackCorrect"
+      [class.wrong]="isEarMode && isAnswered && !feedbackCorrect"
+    >
       <canvas #staffCanvas width="500" height="220"></canvas>
     </div>
 
-    <p class="question-text">Qual é a nota?</p>
+    <p class="question-text">
+      {{ isEarMode ? "Qual é a nota tocada?" : "Qual é a nota?" }}
+    </p>
 
     <div class="options-grid">
       <button
         class="btn btn-note"
-        *ngFor="let option of options"
+        *ngFor="let option of currentOptions"
         [disabled]="isAnswered"
         (click)="checkAnswer(option)"
       >
@@ -208,6 +238,24 @@
     >
       {{ feedback }}
     </div>
+  </div>
+</div>
+
+<div class="screen" [class.active]="screen === 'ear-menu'">
+  <div class="bg-pattern"></div>
+  <div class="container">
+    <button class="btn-back" (click)="goHome()">← Voltar</button>
+    <h2>Teste de ouvido</h2>
+    <p class="subtitle">Escolha o alcance de notas</p>
+
+    <button
+      class="phase-card"
+      *ngFor="let range of earRanges; let i = index"
+      (click)="startEarExercise(i)"
+    >
+      <div class="phase-number ear-number">{{ i + 1 }}</div>
+      <div class="phase-desc">{{ range.label }}</div>
+    </button>
   </div>
 </div>
 
