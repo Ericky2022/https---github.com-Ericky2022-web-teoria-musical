@@ -111,8 +111,8 @@
     >
       <strong>Sem registros ainda</strong>
       <p>
-        O relatório será preenchido automaticamente quando os alunos concluírem
-        as fases.
+        O relatório será preenchido automaticamente quando você concluir as
+        fases.
       </p>
     </div>
 
@@ -121,11 +121,11 @@
       *ngIf="!isReportLoading && performanceCount > 0"
     >
       <div class="card report-metric">
-        <strong>Total de registros</strong>
+        <strong>Suas tentativas</strong>
         <span>{{ performanceCount }}</span>
       </div>
       <div class="card report-metric">
-        <strong>Média geral</strong>
+        <strong>Sua média</strong>
         <span>{{ averagePercent.toFixed(1) }}%</span>
       </div>
     </div>

@@ -7,8 +7,8 @@ import {
   deleteDoc,
   getDocs,
   getFirestore,
-  orderBy,
   query,
+  where,
 } from "firebase/firestore";
 import { DevGeneralReportComponent } from "./dev-general-report/dev-general-report.component";
 import { firebaseApp } from "./firebase.config";
@@ -396,7 +396,7 @@ export class AppComponent {
   }
 
   clearPerformanceData(): void {
-    if (!confirm("Deseja apagar todo o histórico salvo?")) {
+    if (!confirm("Deseja apagar apenas o seu histórico salvo?")) {
       return;
     }
 
@@ -404,11 +404,27 @@ export class AppComponent {
   }
 
   private async clearFirestoreRecords(): Promise<void> {
+    const studentName = this.playerName.trim();
+    if (!studentName) {
+      return;
+    }
+
     try {
-      const snapshot = await getDocs(collection(firestoreDb, "results"));
+      const recordsQuery = query(
+        collection(firestoreDb, "results"),
+        where("student", "==", studentName),
+      );
+      const snapshot = await getDocs(recordsQuery);
       await Promise.all(snapshot.docs.map((item) => deleteDoc(item.ref)));
 
       this.performanceRecordsData = [];
+      this.localPerformanceRecordsData =
+        this.localPerformanceRecordsData.filter(
+          (record) =>
+            this.normalizeStudentName(record.student) !==
+            this.normalizeStudentName(studentName),
+        );
+      this.persistLocalPerformanceRecords();
       this.reportError = "";
     } catch {
       this.reportError = "Nao foi possivel limpar o historico no Firestore.";
@@ -921,26 +937,35 @@ export class AppComponent {
     this.isReportLoading = true;
     this.reportError = "";
 
+    const studentName = this.playerName.trim();
+    if (!studentName) {
+      this.performanceRecordsData = [];
+      this.isReportLoading = false;
+      return;
+    }
+
     try {
       const recordsQuery = query(
         collection(firestoreDb, "results"),
-        orderBy("createdAt", "desc"),
+        where("student", "==", studentName),
       );
       const snapshot = await getDocs(recordsQuery);
 
-      this.performanceRecordsData = snapshot.docs.map((item) => {
-        const data = item.data() as PerformanceRecord;
-        return {
-          timestamp: data.timestamp ?? "",
-          student: data.student ?? "",
-          level: data.level ?? "",
-          phase: data.phase ?? 0,
-          score: data.score ?? 0,
-          totalQuestions: data.totalQuestions ?? this.totalQuestions,
-          percent: data.percent ?? 0,
-          createdAt: data.createdAt,
-        };
-      });
+      this.performanceRecordsData = snapshot.docs
+        .map((item) => {
+          const data = item.data() as PerformanceRecord;
+          return {
+            timestamp: data.timestamp ?? "",
+            student: data.student ?? "",
+            level: data.level ?? "",
+            phase: data.phase ?? 0,
+            score: data.score ?? 0,
+            totalQuestions: data.totalQuestions ?? this.totalQuestions,
+            percent: data.percent ?? 0,
+            createdAt: data.createdAt,
+          };
+        })
+        .sort((a, b) => (b.createdAt ?? 0) - (a.createdAt ?? 0));
     } catch {
       this.performanceRecordsData = [];
       this.reportError = "Nao foi possivel carregar o relatorio do Firestore.";
