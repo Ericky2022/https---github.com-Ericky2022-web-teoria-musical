@@ -30,7 +30,7 @@
       <div class="card info-card">
         <strong>Aluno: {{ playerName }}</strong>
         <p>Escolha qualquer nível para testar as fases.</p>
-        <p>Registros salvos: {{ performanceCount }}</p>
+        <p>Registros salvos neste celular: {{ localPerformanceCount }}</p>
       </div>
 
       <button class="level-card" (click)="openPhases(0)">
@@ -68,6 +68,13 @@
       <div class="report-actions">
         <button class="btn btn-secondary btn-full" (click)="openReport()">
           Ver relatório
+        </button>
+        <button
+          class="btn btn-secondary btn-full"
+          *ngIf="isDevelopment"
+          (click)="openDevGeneralReport()"
+        >
+          Relatório geral (dev)
         </button>
         <button
           class="btn btn-secondary btn-full"
@@ -140,6 +147,18 @@
         <span>{{ record.percent.toFixed(1) }}%</span>
       </div>
     </div>
+  </div>
+</div>
+
+<div
+  class="screen"
+  [class.active]="screen === 'dev-report'"
+  *ngIf="isDevelopment"
+>
+  <div class="bg-pattern"></div>
+  <div class="container">
+    <button class="btn-back" (click)="goHome()">← Voltar</button>
+    <app-dev-general-report></app-dev-general-report>
   </div>
 </div>
 

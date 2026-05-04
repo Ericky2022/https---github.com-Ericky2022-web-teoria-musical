@@ -1,5 +1,5 @@
 import { CommonModule } from "@angular/common";
-import { Component, ElementRef, ViewChild } from "@angular/core";
+import { Component, ElementRef, ViewChild, isDevMode } from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import {
   addDoc,
@@ -10,9 +10,16 @@ import {
   orderBy,
   query,
 } from "firebase/firestore";
+import { DevGeneralReportComponent } from "./dev-general-report/dev-general-report.component";
 import { firebaseApp } from "./firebase.config";
 
-type Screen = "home" | "phases" | "exercise" | "report" | "ear-menu";
+type Screen =
+  | "home"
+  | "phases"
+  | "exercise"
+  | "report"
+  | "ear-menu"
+  | "dev-report";
 
 interface MusicNote {
   displayName: string;
@@ -66,14 +73,17 @@ const firestoreDb = getFirestore(firebaseApp);
 @Component({
   selector: "app-root",
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, DevGeneralReportComponent],
   templateUrl: "./app.component.html",
   styleUrl: "./app.component.css",
 })
 export class AppComponent {
   @ViewChild("staffCanvas") staffCanvas?: ElementRef<HTMLCanvasElement>;
 
+  private readonly localResultsStorageKey = "tm-local-results";
+
   readonly options = ["Dó", "Ré", "Mi", "Fá", "Sol", "Lá", "Si"];
+  readonly isDevelopment = isDevMode();
   readonly totalQuestions = 20;
   readonly goodPercent = 75;
   readonly excellentPercent = 85;
@@ -157,6 +167,7 @@ export class AppComponent {
   modalVisible = false;
   resultState?: ResultState;
   performanceRecordsData: PerformanceRecord[] = [];
+  localPerformanceRecordsData: PerformanceRecord[] = [];
   isReportLoading = false;
   reportError = "";
 
@@ -181,6 +192,10 @@ export class AppComponent {
   private readonly audioCache = new Map<string, HTMLAudioElement>();
 
   private timerId?: ReturnType<typeof setTimeout>;
+
+  constructor() {
+    this.loadLocalPerformanceRecords();
+  }
 
   get stage(): StageConfig {
     return this.stages[this.stageIndex];
@@ -217,6 +232,18 @@ export class AppComponent {
     return this.performanceRecordsData.length;
   }
 
+  get localPerformanceCount(): number {
+    const normalizedPlayerName = this.normalizeStudentName(this.playerName);
+    if (!normalizedPlayerName) {
+      return 0;
+    }
+
+    return this.localPerformanceRecordsData.filter(
+      (record) =>
+        this.normalizeStudentName(record.student) === normalizedPlayerName,
+    ).length;
+  }
+
   get performanceRecords(): PerformanceRecord[] {
     return [...this.performanceRecordsData].reverse();
   }
@@ -238,6 +265,7 @@ export class AppComponent {
       return;
     }
     this.playerName = name;
+    this.loadLocalPerformanceRecords();
     this.showOptions = true;
     void this.refreshPerformanceRecords();
   }
@@ -258,6 +286,16 @@ export class AppComponent {
     this.modalVisible = false;
     this.screen = "report";
     void this.refreshPerformanceRecords();
+  }
+
+  openDevGeneralReport(): void {
+    if (!this.isDevelopment) {
+      return;
+    }
+
+    this.clearTimer();
+    this.modalVisible = false;
+    this.screen = "dev-report";
   }
 
   goHome(): void {
@@ -808,6 +846,8 @@ export class AppComponent {
   private async savePerformanceRecord(
     record: PerformanceRecord,
   ): Promise<void> {
+    this.saveLocalPerformanceRecord(record);
+
     try {
       await addDoc(collection(firestoreDb, "results"), {
         ...record,
@@ -817,6 +857,64 @@ export class AppComponent {
     } catch {
       this.reportError = "Nao foi possivel salvar o resultado no Firestore.";
     }
+  }
+
+  private saveLocalPerformanceRecord(record: PerformanceRecord): void {
+    this.localPerformanceRecordsData = [
+      ...this.localPerformanceRecordsData,
+      { ...record, createdAt: Date.now() },
+    ];
+    this.persistLocalPerformanceRecords();
+  }
+
+  private loadLocalPerformanceRecords(): void {
+    if (globalThis.window === undefined) {
+      this.localPerformanceRecordsData = [];
+      return;
+    }
+
+    try {
+      const raw = globalThis.localStorage.getItem(this.localResultsStorageKey);
+      if (!raw) {
+        this.localPerformanceRecordsData = [];
+        return;
+      }
+
+      const parsed = JSON.parse(raw) as PerformanceRecord[];
+      this.localPerformanceRecordsData = Array.isArray(parsed)
+        ? parsed.map((record) => ({
+            timestamp: record.timestamp ?? "",
+            student: record.student ?? "",
+            level: record.level ?? "",
+            phase: record.phase ?? 0,
+            score: record.score ?? 0,
+            totalQuestions: record.totalQuestions ?? this.totalQuestions,
+            percent: record.percent ?? 0,
+            createdAt: record.createdAt,
+          }))
+        : [];
+    } catch {
+      this.localPerformanceRecordsData = [];
+    }
+  }
+
+  private persistLocalPerformanceRecords(): void {
+    if (globalThis.window === undefined) {
+      return;
+    }
+
+    try {
+      globalThis.localStorage.setItem(
+        this.localResultsStorageKey,
+        JSON.stringify(this.localPerformanceRecordsData),
+      );
+    } catch {
+      // Ignora falhas de escrita local para não interromper o fluxo do app.
+    }
+  }
+
+  private normalizeStudentName(name: string): string {
+    return name.trim().toLocaleLowerCase("pt-BR");
   }
 
   private async refreshPerformanceRecords(): Promise<void> {
