@@ -239,6 +239,10 @@ input[type="text"]:focus {
   border-color: rgba(44, 126, 74, 0.35);
 }
 
+.level-learning {
+  border-color: rgba(122, 87, 14, 0.35);
+}
+
 .level-info {
   flex: 1;
 }
@@ -299,6 +303,10 @@ input[type="text"]:focus {
 
 .ear-number {
   background: #2c7e4a;
+}
+
+.learning-number {
+  background: #7a570e;
 }
 
 .phase-desc {
@@ -409,6 +417,19 @@ canvas {
   margin: 0;
 }
 
+.learning-note-name {
+  font-size: 28px;
+  font-weight: 800;
+  text-align: center;
+  color: #7a570e;
+}
+
+.learning-controls {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
 .options-grid {
   display: flex;
   flex-wrap: wrap;
@@ -441,13 +462,15 @@ canvas {
 }
 
 .feedback-card.correct {
-  background: rgba(45, 106, 79, 0.1);
-  color: #2d6a4f;
+  background: #ffffff;
+  border: 1.5px solid #2d6a4f;
+  color: #0d1b2a;
 }
 
 .feedback-card.wrong {
-  background: rgba(155, 34, 38, 0.1);
-  color: #9b2226;
+  background: #ffffff;
+  border: 1.5px solid #9b2226;
+  color: #0d1b2a;
 }
 
 .modal-overlay {

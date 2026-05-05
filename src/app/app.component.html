@@ -33,6 +33,14 @@
         <p>Registros salvos: {{ localPerformanceCount }}</p>
       </div>
 
+      <button class="level-card level-learning" (click)="openLearningMenu()">
+        <div class="level-info">
+          <span class="level-title">Conhecendo as notas</span>
+          <span class="level-sub">Fase 1 e fase 2</span>
+        </div>
+        <span class="arrow">›</span>
+      </button>
+
       <button class="level-card" (click)="openPhases(0)">
         <div class="level-info">
           <span class="level-title">Inicial</span>
@@ -192,7 +200,13 @@
   <div class="container exercise-container" *ngIf="currentNote">
     <button
       class="btn-back"
-      (click)="isEarMode ? openEarMenu() : closeModalToPhases()"
+      (click)="
+        isLearningMode
+          ? openLearningMenu()
+          : isEarMode
+            ? openEarMenu()
+            : closeModalToPhases()
+      "
     >
       ← Voltar
     </button>
@@ -202,13 +216,19 @@
         <span class="ex-level-phase">{{ levelPhaseLabel }}</span>
         <span class="ex-student">Aluno: {{ playerName }}</span>
       </div>
-      <div class="ex-meta">
+      <div class="ex-meta" *ngIf="!isLearningMode">
         <span>Exercício {{ currentQuestion }} de {{ totalQuestions }}</span>
         <span>Pontuação: {{ score }}</span>
       </div>
+      <div class="ex-meta" *ngIf="isLearningMode">
+        <span
+          >Nota {{ learningNoteIndex + 1 }} de
+          {{ learningNotesSequence.length }}</span
+        >
+      </div>
     </div>
 
-    <div class="counter-row" *ngIf="!isEarMode">
+    <div class="counter-row" *ngIf="!isEarMode && !isLearningMode">
       <span class="counter">{{ counter }}/{{ stage.duration }}</span>
       <div class="counter-bar-outer">
         <div class="counter-bar" [style.width.%]="counterPercent"></div>
@@ -235,14 +255,35 @@
     </div>
 
     <p class="question-text">
-      {{ isEarMode ? "Qual é a nota tocada?" : "Qual é a nota?" }}
+      {{
+        isLearningPhaseOne
+          ? "Observe a nota no pentagrama"
+          : isLearningPhaseTwo
+            ? "Qual é a nota?"
+            : isEarMode
+              ? "Qual é a nota tocada?"
+              : "Qual é a nota?"
+      }}
     </p>
 
-    <div class="options-grid">
+    <div class="learning-note-name" *ngIf="isLearningPhaseOne && currentNote">
+      {{ learningNoteDisplayName }}
+    </div>
+
+    <div class="learning-controls" *ngIf="isLearningPhaseOne">
+      <button class="btn btn-secondary" (click)="previousLearningNote()">
+        Nota anterior
+      </button>
+      <button class="btn btn-primary" (click)="nextLearningNote()">
+        Próxima nota
+      </button>
+    </div>
+
+    <div class="options-grid" *ngIf="!isLearningMode || isLearningPhaseTwo">
       <button
         class="btn btn-note"
         *ngFor="let option of currentOptions"
-        [disabled]="isAnswered"
+        [disabled]="isAnswered && !isLearningPhaseTwo"
         (click)="checkAnswer(option)"
       >
         {{ option }}
@@ -251,7 +292,7 @@
 
     <div
       class="feedback-card"
-      *ngIf="feedback"
+      *ngIf="feedback && (!isLearningMode || isLearningPhaseTwo)"
       [class.correct]="feedbackCorrect"
       [class.wrong]="!feedbackCorrect"
     >
@@ -274,6 +315,27 @@
     >
       <div class="phase-number ear-number">{{ i + 1 }}</div>
       <div class="phase-desc">{{ range.label }}</div>
+    </button>
+  </div>
+</div>
+
+<div class="screen" [class.active]="screen === 'learning-menu'">
+  <div class="bg-pattern"></div>
+  <div class="container">
+    <button class="btn-back" (click)="goHome()">← Voltar</button>
+    <h2>Conhecendo as notas</h2>
+    <p class="subtitle">Escolha a fase</p>
+
+    <button class="phase-card" (click)="startLearningPhase(1)">
+      <div class="phase-number learning-number">1</div>
+      <div class="phase-desc">Dó1 até Sol2 subindo e descendo</div>
+    </button>
+
+    <button class="phase-card" (click)="startLearningPhase(2)">
+      <div class="phase-number learning-number">2</div>
+      <div class="phase-desc">
+        Sem nome da nota, com botões e avanço só no acerto
+      </div>
     </button>
   </div>
 </div>

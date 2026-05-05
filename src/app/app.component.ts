@@ -19,6 +19,7 @@ type Screen =
   | "exercise"
   | "report"
   | "ear-menu"
+  | "learning-menu"
   | "dev-report";
 
 interface MusicNote {
@@ -150,11 +151,15 @@ export class AppComponent {
   selectedLevelIndex = 0;
   earRangeIndex = 0;
   isEarMode = false;
+  isLearningMode = false;
+  learningPhase = 1;
 
   readonly earRanges: EarRangeConfig[] = this.buildEarRanges();
 
   stageIndex = 0;
   notes: MusicNote[] = [];
+  learningNotesSequence: MusicNote[] = [];
+  learningNoteIndex = 0;
   currentNote?: MusicNote;
   currentQuestion = 1;
   score = 0;
@@ -202,6 +207,10 @@ export class AppComponent {
   }
 
   get levelPhaseLabel(): string {
+    if (this.isLearningMode) {
+      return `Conhecendo as notas - Fase ${this.learningPhase}`;
+    }
+
     if (this.isEarMode) {
       return `Teste de ouvido - ${this.earRanges[this.earRangeIndex].label}`;
     }
@@ -226,6 +235,22 @@ export class AppComponent {
     }
 
     return this.options;
+  }
+
+  get learningNoteDisplayName(): string {
+    if (!this.currentNote) {
+      return "";
+    }
+
+    return this.currentNote.displayName.replaceAll(/\d+$/g, "");
+  }
+
+  get isLearningPhaseOne(): boolean {
+    return this.isLearningMode && this.learningPhase === 1;
+  }
+
+  get isLearningPhaseTwo(): boolean {
+    return this.isLearningMode && this.learningPhase === 2;
   }
 
   get performanceCount(): number {
@@ -278,7 +303,33 @@ export class AppComponent {
   openEarMenu(): void {
     this.clearTimer();
     this.modalVisible = false;
+    this.isLearningMode = false;
     this.screen = "ear-menu";
+  }
+
+  openLearningMenu(): void {
+    this.clearTimer();
+    this.modalVisible = false;
+    this.isEarMode = false;
+    this.isLearningMode = false;
+    this.screen = "learning-menu";
+  }
+
+  startLearningPhase(phase: 1 | 2): void {
+    this.clearTimer();
+    this.modalVisible = false;
+    this.isEarMode = false;
+    this.isLearningMode = true;
+    this.learningPhase = phase;
+    this.learningNotesSequence = this.buildLearningNotesSequence();
+    this.learningNoteIndex = 0;
+    this.currentQuestion = 1;
+    this.score = 0;
+    this.isAnswered = false;
+    this.feedback = "";
+    this.counter = 0;
+    this.screen = "exercise";
+    this.setLearningNoteByIndex(this.learningNoteIndex);
   }
 
   openReport(): void {
@@ -301,6 +352,7 @@ export class AppComponent {
   goHome(): void {
     this.clearTimer();
     this.modalVisible = false;
+    this.isLearningMode = false;
     this.screen = "home";
   }
 
@@ -308,6 +360,7 @@ export class AppComponent {
     this.clearTimer();
     this.modalVisible = false;
     this.isEarMode = false;
+    this.isLearningMode = false;
     this.stageIndex = stageIndex;
     this.notes = this.getNotesByPhase(this.stage.phase, this.stage.duration);
     this.currentQuestion = 1;
@@ -323,6 +376,7 @@ export class AppComponent {
     this.clearTimer();
     this.modalVisible = false;
     this.isEarMode = true;
+    this.isLearningMode = false;
     this.earRangeIndex = rangeIndex;
     this.notes = this.earRanges[rangeIndex].notes;
     this.currentQuestion = 1;
@@ -335,6 +389,11 @@ export class AppComponent {
   }
 
   checkAnswer(selected: string): void {
+    if (this.isLearningPhaseTwo) {
+      this.checkLearningPhaseTwoAnswer(selected);
+      return;
+    }
+
     if (this.isAnswered || !this.currentNote) {
       return;
     }
@@ -374,6 +433,11 @@ export class AppComponent {
 
   closeModalToPhases(): void {
     this.modalVisible = false;
+    if (this.isLearningMode) {
+      this.openLearningMenu();
+      return;
+    }
+
     this.screen = this.isEarMode ? "ear-menu" : "phases";
   }
 
@@ -393,6 +457,33 @@ export class AppComponent {
     }
 
     void this.playNoteAudio(this.currentNote.audioKey);
+  }
+
+  nextLearningNote(): void {
+    if (!this.isLearningPhaseOne || this.learningNotesSequence.length === 0) {
+      return;
+    }
+
+    const isLastNote =
+      this.learningNoteIndex >= this.learningNotesSequence.length - 1;
+    if (isLastNote) {
+      this.finishLearningMode();
+      return;
+    }
+
+    const nextIndex = this.learningNoteIndex + 1;
+    this.setLearningNoteByIndex(nextIndex);
+  }
+
+  previousLearningNote(): void {
+    if (!this.isLearningPhaseOne || this.learningNotesSequence.length === 0) {
+      return;
+    }
+
+    const previousIndex =
+      (this.learningNoteIndex - 1 + this.learningNotesSequence.length) %
+      this.learningNotesSequence.length;
+    this.setLearningNoteByIndex(previousIndex);
   }
 
   clearPerformanceData(): void {
@@ -462,6 +553,10 @@ export class AppComponent {
   }
 
   private generateQuestion(): void {
+    if (this.isLearningMode) {
+      return;
+    }
+
     const previousAudioKey = this.currentNote?.audioKey;
     let next = this.notes[Math.floor(Math.random() * this.notes.length)];
 
@@ -765,6 +860,105 @@ export class AppComponent {
         label: `Dó1 a ${allNotes[item.idx].displayName}`,
         notes: item.notes,
       }));
+  }
+
+  private buildLearningNotesSequence(): MusicNote[] {
+    const highestRange = this.earRanges.at(-1);
+    const ascending = (highestRange?.notes ?? []).map((note) => ({
+      ...note,
+      duration: 4,
+      rhythmLabel: "Semibreve",
+    }));
+
+    if (ascending.length <= 1) {
+      return ascending;
+    }
+
+    const descending = ascending.slice(0, -1).reverse();
+    return [...ascending, ...descending];
+  }
+
+  private setLearningNoteByIndex(index: number): void {
+    if (this.learningNotesSequence.length === 0) {
+      return;
+    }
+
+    const safeIndex = Math.max(
+      0,
+      Math.min(index, this.learningNotesSequence.length - 1),
+    );
+    this.learningNoteIndex = safeIndex;
+    this.currentQuestion = safeIndex + 1;
+    this.currentNote = this.learningNotesSequence[safeIndex];
+    this.isAnswered = false;
+    this.feedback = "";
+    this.feedbackCorrect = false;
+    this.counter = 0;
+
+    setTimeout(() => this.drawStaff(), 0);
+    void this.playNoteAudio(this.currentNote.audioKey);
+  }
+
+  private checkLearningPhaseTwoAnswer(selected: string): void {
+    if (!this.currentNote) {
+      return;
+    }
+
+    const correct = selected === this.learningNoteDisplayName;
+    this.feedbackCorrect = correct;
+
+    if (!correct) {
+      this.feedback = "Errou! Tente novamente.";
+      void this.playAudio(this.errorAudioPath);
+      return;
+    }
+
+    this.feedback = "Acertou!";
+    this.score++;
+
+    const isLastNote =
+      this.learningNoteIndex >= this.learningNotesSequence.length - 1;
+    if (isLastNote) {
+      this.finishLearningMode();
+      return;
+    }
+
+    setTimeout(() => {
+      this.setLearningNoteByIndex(this.learningNoteIndex + 1);
+    }, 350);
+  }
+
+  private finishLearningMode(): void {
+    const totalLearningNotes = this.learningNotesSequence.length;
+    if (totalLearningNotes === 0) {
+      return;
+    }
+
+    this.clearTimer();
+
+    this.resultState = {
+      title: "Sequência concluída",
+      content:
+        `Aluno: ${this.playerName}\n` +
+        `Conhecendo as notas - Fase ${this.learningPhase}\n` +
+        `Notas concluídas: ${totalLearningNotes} de ${totalLearningNotes}\n` +
+        "Parabéns! Você concluiu toda a sequência de notas.",
+      isBad: false,
+      isGood: false,
+      isLast: true,
+    };
+
+    void this.savePerformanceRecord({
+      timestamp: new Date().toLocaleString("pt-BR"),
+      student: this.playerName,
+      level: "Conhecendo as notas",
+      phase: this.learningPhase,
+      score: totalLearningNotes,
+      totalQuestions: totalLearningNotes,
+      percent: 100,
+    });
+
+    this.modalVisible = true;
   }
 
   private rhythmLabel(duration: number): string {
