@@ -29,6 +29,7 @@ export class FluteLessonsComponent {
   @Output() lessonAccess = new EventEmitter<FluteLessonAccessEvent>();
 
   scoreImageLoadFailed = false;
+  currentEmbedUrl: SafeResourceUrl | null = null;
 
   constructor(private readonly sanitizer: DomSanitizer) {}
 
@@ -67,12 +68,12 @@ export class FluteLessonsComponent {
 
   selectedLesson: FluteLesson | null = null;
 
-  get selectedLessonEmbedUrl(): SafeResourceUrl | null {
-    if (this.selectedLesson?.sourceType !== "youtube") {
+  private buildYoutubeEmbedUrl(lesson: FluteLesson): SafeResourceUrl | null {
+    if (lesson.sourceType !== "youtube") {
       return null;
     }
 
-    const videoId = this.extractYoutubeVideoId(this.selectedLesson.videoSrc);
+    const videoId = this.extractYoutubeVideoId(lesson.videoSrc);
 
     if (!videoId) {
       return null;
@@ -86,6 +87,7 @@ export class FluteLessonsComponent {
   openLesson(lesson: FluteLesson): void {
     this.scoreImageLoadFailed = false;
     this.selectedLesson = lesson;
+    this.currentEmbedUrl = this.buildYoutubeEmbedUrl(lesson);
     this.lessonAccess.emit({
       lessonNumber: lesson.number,
       lessonTitle: lesson.title,
@@ -95,6 +97,7 @@ export class FluteLessonsComponent {
 
   closeLesson(): void {
     this.selectedLesson = null;
+    this.currentEmbedUrl = null;
   }
 
   goBack(): void {

@@ -29,11 +29,9 @@
 
       <div class="video-wrapper">
         <iframe
-          *ngIf="
-            selectedLesson.sourceType === 'youtube' && selectedLessonEmbedUrl
-          "
+          *ngIf="selectedLesson.sourceType === 'youtube' && currentEmbedUrl"
           class="lesson-embed"
-          [src]="selectedLessonEmbedUrl"
+          [src]="currentEmbedUrl"
           title="Video da {{ selectedLesson.title }}"
           allow="
             accelerometer;
