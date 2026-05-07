@@ -11,6 +11,7 @@ import {
   where,
 } from "firebase/firestore";
 import { DevGeneralReportComponent } from "./dev-general-report/dev-general-report.component";
+import { FluteLessonsComponent } from "./flute-lessons/flute-lessons.component";
 import { firebaseApp } from "./firebase.config";
 
 type Screen =
@@ -20,6 +21,7 @@ type Screen =
   | "report"
   | "ear-menu"
   | "learning-menu"
+  | "flute-lessons"
   | "dev-report";
 
 interface MusicNote {
@@ -69,12 +71,26 @@ interface PerformanceRecord {
   createdAt?: number;
 }
 
+interface FluteLessonAccessRecord {
+  timestamp: string;
+  student: string;
+  lessonNumber: number;
+  lessonTitle: string;
+  sourceType: "local" | "youtube";
+  createdAt?: number;
+}
+
 const firestoreDb = getFirestore(firebaseApp);
 
 @Component({
   selector: "app-root",
   standalone: true,
-  imports: [CommonModule, FormsModule, DevGeneralReportComponent],
+  imports: [
+    CommonModule,
+    FormsModule,
+    DevGeneralReportComponent,
+    FluteLessonsComponent,
+  ],
   templateUrl: "./app.component.html",
   styleUrl: "./app.component.css",
 })
@@ -313,6 +329,32 @@ export class AppComponent {
     this.isEarMode = false;
     this.isLearningMode = false;
     this.screen = "learning-menu";
+  }
+
+  openFluteLesson(): void {
+    this.clearTimer();
+    this.modalVisible = false;
+    this.isEarMode = false;
+    this.isLearningMode = false;
+    this.screen = "flute-lessons";
+  }
+
+  registerFluteLessonAccess(event: {
+    lessonNumber: number;
+    lessonTitle: string;
+    sourceType: "local" | "youtube";
+  }): void {
+    const normalizedStudent = this.playerName.trim() || "Sem nome";
+
+    const record: FluteLessonAccessRecord = {
+      timestamp: new Date().toLocaleString("pt-BR"),
+      student: normalizedStudent,
+      lessonNumber: event.lessonNumber,
+      lessonTitle: event.lessonTitle,
+      sourceType: event.sourceType,
+    };
+
+    void this.saveFluteLessonAccess(record);
   }
 
   startLearningPhase(phase: 1 | 2): void {
@@ -1066,6 +1108,19 @@ export class AppComponent {
       await this.refreshPerformanceRecords();
     } catch {
       this.reportError = "Nao foi possivel salvar o resultado no Firestore.";
+    }
+  }
+
+  private async saveFluteLessonAccess(
+    record: FluteLessonAccessRecord,
+  ): Promise<void> {
+    try {
+      await addDoc(collection(firestoreDb, "lesson-accesses"), {
+        ...record,
+        createdAt: Date.now(),
+      });
+    } catch {
+      // Nao interrompe o fluxo da aula caso o registro dev falhe.
     }
   }
 

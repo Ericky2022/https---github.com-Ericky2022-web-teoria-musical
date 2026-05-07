@@ -73,6 +73,14 @@
         <span class="arrow">›</span>
       </button>
 
+      <button class="level-card level-flute" (click)="openFluteLesson()">
+        <div class="level-info">
+          <span class="level-title">Prática de Flauta</span>
+          <span class="level-sub">32 aulas em vídeo</span>
+        </div>
+        <span class="arrow">›</span>
+      </button>
+
       <div class="report-actions">
         <button class="btn btn-secondary btn-full" (click)="openReport()">
           Ver relatório
@@ -338,6 +346,13 @@
       </div>
     </button>
   </div>
+</div>
+
+<div class="screen" [class.active]="screen === 'flute-lessons'">
+  <app-flute-lessons
+    (back)="goHome()"
+    (lessonAccess)="registerFluteLessonAccess($event)"
+  ></app-flute-lessons>
 </div>
 
 <div class="modal-overlay" *ngIf="modalVisible && resultState">

@@ -30,6 +30,23 @@ interface StudentSummary {
   lastRecordAt: number;
 }
 
+interface LessonAccessRecord {
+  timestamp: string;
+  student: string;
+  lessonNumber: number;
+  lessonTitle: string;
+  sourceType: "local" | "youtube";
+  createdAt?: number;
+}
+
+interface LessonAccessSummary {
+  lessonNumber: number;
+  lessonTitle: string;
+  totalAccesses: number;
+  uniqueStudents: number;
+  lastAccessAt: number;
+}
+
 @Component({
   selector: "app-dev-general-report",
   standalone: true,
@@ -39,6 +56,7 @@ interface StudentSummary {
 })
 export class DevGeneralReportComponent implements OnInit {
   records: PerformanceRecord[] = [];
+  lessonAccessRecords: LessonAccessRecord[] = [];
   isLoading = false;
   errorMessage = "";
   expandedStudent = "";
@@ -58,7 +76,14 @@ export class DevGeneralReportComponent implements OnInit {
         collection(this.firestoreDb, "results"),
         orderBy("createdAt", "desc"),
       );
-      const snapshot = await getDocs(recordsQuery);
+      const lessonAccessQuery = query(
+        collection(this.firestoreDb, "lesson-accesses"),
+        orderBy("createdAt", "desc"),
+      );
+      const [snapshot, lessonSnapshot] = await Promise.all([
+        getDocs(recordsQuery),
+        getDocs(lessonAccessQuery),
+      ]);
 
       this.records = snapshot.docs.map((item) => {
         const data = item.data() as PerformanceRecord;
@@ -73,8 +98,21 @@ export class DevGeneralReportComponent implements OnInit {
           createdAt: data.createdAt,
         };
       });
+
+      this.lessonAccessRecords = lessonSnapshot.docs.map((item) => {
+        const data = item.data() as LessonAccessRecord;
+        return {
+          timestamp: data.timestamp ?? "",
+          student: data.student ?? "",
+          lessonNumber: data.lessonNumber ?? 0,
+          lessonTitle: data.lessonTitle ?? "",
+          sourceType: data.sourceType ?? "youtube",
+          createdAt: data.createdAt,
+        };
+      });
     } catch {
       this.records = [];
+      this.lessonAccessRecords = [];
       this.errorMessage =
         "Nao foi possivel carregar o relatorio geral do Firestore.";
     } finally {
@@ -90,6 +128,56 @@ export class DevGeneralReportComponent implements OnInit {
 
   get totalAttempts(): number {
     return this.records.length;
+  }
+
+  get totalLessonAccesses(): number {
+    return this.lessonAccessRecords.length;
+  }
+
+  get lessonAccessSummaries(): LessonAccessSummary[] {
+    const grouped = new Map<
+      number,
+      LessonAccessSummary & { students: Set<string> }
+    >();
+
+    for (const access of this.lessonAccessRecords) {
+      if (!access.lessonNumber) {
+        continue;
+      }
+
+      const current = grouped.get(access.lessonNumber);
+      const lastAccessAt = access.createdAt ?? 0;
+      const student = access.student.trim() || "Sem nome";
+
+      if (!current) {
+        grouped.set(access.lessonNumber, {
+          lessonNumber: access.lessonNumber,
+          lessonTitle: access.lessonTitle || `Aula ${access.lessonNumber}`,
+          totalAccesses: 1,
+          uniqueStudents: 0,
+          lastAccessAt,
+          students: new Set([student]),
+        });
+        continue;
+      }
+
+      current.totalAccesses += 1;
+      current.lastAccessAt = Math.max(current.lastAccessAt, lastAccessAt);
+      current.students.add(student);
+    }
+
+    return Array.from(grouped.values())
+      .map(({ students, ...summary }) => ({
+        ...summary,
+        uniqueStudents: students.size,
+      }))
+      .sort((a, b) => a.lessonNumber - b.lessonNumber);
+  }
+
+  accessesByLesson(lessonNumber: number): LessonAccessRecord[] {
+    return this.lessonAccessRecords
+      .filter((item) => item.lessonNumber === lessonNumber)
+      .sort((a, b) => (b.createdAt ?? 0) - (a.createdAt ?? 0));
   }
 
   get studentSummaries(): StudentSummary[] {

@@ -19,6 +19,10 @@
     <strong>Total de tentativas</strong>
     <span>{{ totalAttempts }}</span>
   </div>
+  <div class="card report-metric">
+    <strong>Acessos as aulas</strong>
+    <span>{{ totalLessonAccesses }}</span>
+  </div>
 </div>
 
 <div
@@ -80,6 +84,62 @@
         <span>{{ attempt.phase || 0 }}</span>
         <span>{{ attempt.score }}/{{ attempt.totalQuestions }}</span>
         <span>{{ attempt.percent.toFixed(1) }}%</span>
+      </div>
+    </div>
+  </ng-container>
+</div>
+
+<div
+  class="report-list"
+  *ngIf="!isLoading && !errorMessage && totalLessonAccesses > 0"
+>
+  <div class="report-row report-row-head">
+    <span>Aula</span>
+    <span>Acessos</span>
+    <span>Alunos</span>
+    <span>Ultimo acesso</span>
+    <span>Detalhes</span>
+  </div>
+
+  <ng-container *ngFor="let lesson of lessonAccessSummaries">
+    <div class="report-row">
+      <span>{{ lesson.lessonTitle }}</span>
+      <span>{{ lesson.totalAccesses }}</span>
+      <span>{{ lesson.uniqueStudents }}</span>
+      <span>{{
+        lesson.lastAccessAt
+          ? (lesson.lastAccessAt | date: "dd/MM/yyyy HH:mm")
+          : "-"
+      }}</span>
+      <span>
+        <button
+          class="student-link"
+          type="button"
+          (click)="toggleStudentDetails('lesson-' + lesson.lessonNumber)"
+        >
+          Ver
+        </button>
+      </span>
+    </div>
+
+    <div
+      class="attempts-detail"
+      *ngIf="isStudentExpanded('lesson-' + lesson.lessonNumber)"
+    >
+      <div class="attempts-head">Acessos da {{ lesson.lessonTitle }}</div>
+      <div class="attempts-grid attempts-grid-head lesson-access-grid">
+        <span>Data</span>
+        <span>Aluno</span>
+        <span>Fonte</span>
+      </div>
+
+      <div
+        class="attempts-grid lesson-access-grid"
+        *ngFor="let access of accessesByLesson(lesson.lessonNumber)"
+      >
+        <span>{{ access.timestamp || "-" }}</span>
+        <span>{{ access.student || "Sem nome" }}</span>
+        <span>{{ access.sourceType }}</span>
       </div>
     </div>
   </ng-container>

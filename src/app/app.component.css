@@ -243,6 +243,10 @@ input[type="text"]:focus {
   border-color: rgba(122, 87, 14, 0.35);
 }
 
+.level-flute {
+  border-color: rgba(100, 60, 180, 0.45);
+}
+
 .level-info {
   flex: 1;
 }
