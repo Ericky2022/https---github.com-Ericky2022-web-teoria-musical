@@ -41,7 +41,7 @@ export class FluteLessonsComponent {
         title: `Aula ${lessonNumber}`,
         sourceType: "youtube",
         videoSrc: "https://youtu.be/ffCBSKwBMck",
-        scoreImageSrc: `/assets/partituras/aula${lessonNumber}.png`,
+        scoreImageSrc: `assets/partituras/aula${lessonNumber}.png`,
       };
     }
 
@@ -51,7 +51,7 @@ export class FluteLessonsComponent {
         title: `Aula ${lessonNumber}`,
         sourceType: "youtube",
         videoSrc: "https://youtu.be/5WzvtE1QeAY",
-        scoreImageSrc: `/assets/partituras/aula${lessonNumber}.png`,
+        scoreImageSrc: `assets/partituras/aula${lessonNumber}.png`,
       };
     }
 
@@ -61,7 +61,7 @@ export class FluteLessonsComponent {
       sourceType: "local",
       videoSrc: `assets/videos/aula${lessonNumber}.mp4`,
       captionSrc: "data:text/vtt;charset=utf-8,WEBVTT",
-      scoreImageSrc: `/assets/partituras/aula${lessonNumber}.png`,
+      scoreImageSrc: `assets/partituras/aula${lessonNumber}.png`,
     };
   });
 

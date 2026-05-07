@@ -337,6 +337,7 @@ export class AppComponent {
     this.isEarMode = false;
     this.isLearningMode = false;
     this.screen = "flute-lessons";
+    this.scrollToTop();
   }
 
   registerFluteLessonAccess(event: {
@@ -1093,6 +1094,14 @@ export class AppComponent {
     const minVolume = 0.25;
     const progress = (currentTick - 1) / (totalTicks - 1);
     return minVolume + (1 - minVolume) * progress;
+  }
+
+  private scrollToTop(): void {
+    if (globalThis.window === undefined) {
+      return;
+    }
+
+    globalThis.window.scrollTo({ top: 0, behavior: "auto" });
   }
 
   private async savePerformanceRecord(
