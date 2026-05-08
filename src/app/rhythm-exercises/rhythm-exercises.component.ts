@@ -158,7 +158,10 @@ export class RhythmExercisesComponent implements OnDestroy {
 
     this.revokeRecordedAudioUrl();
     this.recordedAudioUrl = URL.createObjectURL(recordedBlob);
-    await this.compareWithReference(recordedBlob, this.selectedExercise.audioSrc);
+    await this.compareWithReference(
+      recordedBlob,
+      this.selectedExercise.audioSrc,
+    );
   }
 
   private async compareWithReference(
@@ -204,12 +207,16 @@ export class RhythmExercisesComponent implements OnDestroy {
   }
 
   private async decodeUrlAudio(audioSrc: string): Promise<AudioBuffer> {
-    const response = await fetch(new URL(audioSrc, document.baseURI).toString());
+    const response = await fetch(
+      new URL(audioSrc, document.baseURI).toString(),
+    );
     const arrayBuffer = await response.arrayBuffer();
     return this.decodeAudioBuffer(arrayBuffer);
   }
 
-  private async decodeAudioBuffer(arrayBuffer: ArrayBuffer): Promise<AudioBuffer> {
+  private async decodeAudioBuffer(
+    arrayBuffer: ArrayBuffer,
+  ): Promise<AudioBuffer> {
     this.audioContext ??= new AudioContext();
 
     return this.audioContext.decodeAudioData(arrayBuffer.slice(0));
@@ -223,7 +230,10 @@ export class RhythmExercisesComponent implements OnDestroy {
       this.mixToMono(referenceBuffer),
       0.015,
     );
-    const recordedSamples = this.trimSilence(this.mixToMono(recordedBuffer), 0.02);
+    const recordedSamples = this.trimSilence(
+      this.mixToMono(recordedBuffer),
+      0.02,
+    );
 
     if (referenceSamples.length < 256 || recordedSamples.length < 256) {
       return 0;
@@ -289,7 +299,10 @@ export class RhythmExercisesComponent implements OnDestroy {
     return samples.slice(start, end + 1);
   }
 
-  private buildEnvelope(samples: Float32Array, windowSize: number): Float32Array {
+  private buildEnvelope(
+    samples: Float32Array,
+    windowSize: number,
+  ): Float32Array {
     const frameCount = Math.max(1, Math.ceil(samples.length / windowSize));
     const envelope = new Float32Array(frameCount);
 
