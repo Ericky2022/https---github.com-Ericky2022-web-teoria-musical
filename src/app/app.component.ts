@@ -12,6 +12,7 @@ import {
 } from "firebase/firestore";
 import { DevGeneralReportComponent } from "./dev-general-report/dev-general-report.component";
 import { FluteLessonsComponent } from "./flute-lessons/flute-lessons.component";
+import { RhythmExercisesComponent } from "./rhythm-exercises/rhythm-exercises.component";
 import { firebaseApp } from "./firebase.config";
 
 type Screen =
@@ -22,6 +23,7 @@ type Screen =
   | "ear-menu"
   | "learning-menu"
   | "flute-lessons"
+  | "rhythm-exercises"
   | "dev-report";
 
 interface MusicNote {
@@ -90,6 +92,7 @@ const firestoreDb = getFirestore(firebaseApp);
     FormsModule,
     DevGeneralReportComponent,
     FluteLessonsComponent,
+    RhythmExercisesComponent,
   ],
   templateUrl: "./app.component.html",
   styleUrl: "./app.component.css",
@@ -337,6 +340,15 @@ export class AppComponent {
     this.isEarMode = false;
     this.isLearningMode = false;
     this.screen = "flute-lessons";
+    this.scrollToTop();
+  }
+
+  openRhythmExercises(): void {
+    this.clearTimer();
+    this.modalVisible = false;
+    this.isEarMode = false;
+    this.isLearningMode = false;
+    this.screen = "rhythm-exercises";
     this.scrollToTop();
   }
 

@@ -59,6 +59,7 @@ export class DevGeneralReportComponent implements OnInit {
   lessonAccessRecords: LessonAccessRecord[] = [];
   isLoading = false;
   errorMessage = "";
+  lessonAccessError = "";
   expandedStudent = "";
 
   private readonly firestoreDb = getFirestore(firebaseApp);
@@ -70,20 +71,14 @@ export class DevGeneralReportComponent implements OnInit {
   async refresh(): Promise<void> {
     this.isLoading = true;
     this.errorMessage = "";
+    this.lessonAccessError = "";
 
     try {
       const recordsQuery = query(
         collection(this.firestoreDb, "results"),
         orderBy("createdAt", "desc"),
       );
-      const lessonAccessQuery = query(
-        collection(this.firestoreDb, "lesson-accesses"),
-        orderBy("createdAt", "desc"),
-      );
-      const [snapshot, lessonSnapshot] = await Promise.all([
-        getDocs(recordsQuery),
-        getDocs(lessonAccessQuery),
-      ]);
+      const snapshot = await getDocs(recordsQuery);
 
       this.records = snapshot.docs.map((item) => {
         const data = item.data() as PerformanceRecord;
@@ -99,17 +94,30 @@ export class DevGeneralReportComponent implements OnInit {
         };
       });
 
-      this.lessonAccessRecords = lessonSnapshot.docs.map((item) => {
-        const data = item.data() as LessonAccessRecord;
-        return {
-          timestamp: data.timestamp ?? "",
-          student: data.student ?? "",
-          lessonNumber: data.lessonNumber ?? 0,
-          lessonTitle: data.lessonTitle ?? "",
-          sourceType: data.sourceType ?? "youtube",
-          createdAt: data.createdAt,
-        };
-      });
+      try {
+        // Evita falhas por indice/ordenacao na colecao nova de acessos.
+        const lessonSnapshot = await getDocs(
+          collection(this.firestoreDb, "lesson-accesses"),
+        );
+
+        this.lessonAccessRecords = lessonSnapshot.docs
+          .map((item) => {
+            const data = item.data() as LessonAccessRecord;
+            return {
+              timestamp: data.timestamp ?? "",
+              student: data.student ?? "",
+              lessonNumber: data.lessonNumber ?? 0,
+              lessonTitle: data.lessonTitle ?? "",
+              sourceType: data.sourceType ?? "youtube",
+              createdAt: data.createdAt,
+            };
+          })
+          .sort((a, b) => (b.createdAt ?? 0) - (a.createdAt ?? 0));
+      } catch {
+        this.lessonAccessRecords = [];
+        this.lessonAccessError =
+          "Nao foi possivel carregar os acessos das aulas de flauta.";
+      }
     } catch {
       this.records = [];
       this.lessonAccessRecords = [];

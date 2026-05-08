@@ -247,6 +247,10 @@ input[type="text"]:focus {
   border-color: rgba(100, 60, 180, 0.45);
 }
 
+.level-rhythm {
+  border-color: rgba(197, 116, 32, 0.4);
+}
+
 .level-info {
   flex: 1;
 }

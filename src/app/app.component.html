@@ -81,6 +81,14 @@
         <span class="arrow">›</span>
       </button>
 
+      <button class="level-card level-rhythm" (click)="openRhythmExercises()">
+        <div class="level-info">
+          <span class="level-title">Exercicio ritmico</span>
+          <span class="level-sub">Lista de exercicios com audio</span>
+        </div>
+        <span class="arrow">›</span>
+      </button>
+
       <div class="report-actions">
         <button class="btn btn-secondary btn-full" (click)="openReport()">
           Ver relatório
@@ -353,6 +361,10 @@
     (back)="goHome()"
     (lessonAccess)="registerFluteLessonAccess($event)"
   ></app-flute-lessons>
+</div>
+
+<div class="screen" [class.active]="screen === 'rhythm-exercises'">
+  <app-rhythm-exercises (back)="goHome()"></app-rhythm-exercises>
 </div>
 
 <div class="modal-overlay" *ngIf="modalVisible && resultState">

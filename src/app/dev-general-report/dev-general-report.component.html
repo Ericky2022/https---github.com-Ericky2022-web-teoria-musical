@@ -10,6 +10,14 @@
   <p>{{ errorMessage }}</p>
 </div>
 
+<div
+  class="card info-card"
+  *ngIf="!isLoading && !errorMessage && lessonAccessError"
+>
+  <strong>Aviso</strong>
+  <p>{{ lessonAccessError }}</p>
+</div>
+
 <div class="report-summary" *ngIf="!isLoading && !errorMessage">
   <div class="card report-metric">
     <strong>Total de alunos</strong>
