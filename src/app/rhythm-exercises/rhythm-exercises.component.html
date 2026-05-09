@@ -45,56 +45,10 @@
       </section>
 
       <section class="rhythm-card">
-        <h3>Sua gravacao</h3>
-
-        <div class="action-row">
-          <button
-            class="action-btn"
-            type="button"
-            (click)="startRecording()"
-            [disabled]="isRecording || isAnalyzing"
-          >
-            Gravar tentativa
-          </button>
-
-          <button
-            class="action-btn stop"
-            type="button"
-            *ngIf="isRecording"
-            (click)="stopRecording()"
-          >
-            Parar gravacao
-          </button>
-        </div>
-
-        <p class="status-info" *ngIf="isAnalyzing">
-          Comparando com o audio de referencia...
+        <h3>Orientacao</h3>
+        <p class="status-info">
+          Ouça o áudio de referência e pratique acompanhando a partitura.
         </p>
-
-        <audio
-          *ngIf="recordedAudioUrl"
-          class="rhythm-audio"
-          [src]="recordedAudioUrl"
-          controls
-        ></audio>
-
-        <p
-          class="status-info"
-          *ngIf="comparisonMessage"
-          [class.ok]="comparisonDone && canProceed"
-          [class.warn]="comparisonDone && !canProceed"
-        >
-          {{ comparisonMessage }}
-        </p>
-
-        <button
-          class="next-btn"
-          type="button"
-          *ngIf="canProceed"
-          (click)="openNextExercise()"
-        >
-          Proximo
-        </button>
       </section>
     </ng-container>
   </div>

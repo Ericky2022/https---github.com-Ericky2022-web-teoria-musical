@@ -79,6 +79,23 @@
           }}.png
         </p>
       </section>
+
+      <div class="lesson-nav">
+        <button
+          class="btn-nav btn-prev"
+          *ngIf="previousLesson"
+          (click)="openLesson(previousLesson!)"
+        >
+          ← Aula anterior
+        </button>
+        <button
+          class="btn-nav btn-next"
+          *ngIf="nextLesson"
+          (click)="openLesson(nextLesson!)"
+        >
+          Próxima aula →
+        </button>
+      </div>
     </ng-container>
   </div>
 </div>

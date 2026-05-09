@@ -51,6 +51,34 @@ h2 {
   color: #005f73;
 }
 
+.lesson-nav {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  margin-top: 24px;
+  flex-wrap: nowrap;
+}
+
+.btn-nav {
+  background-color: #005f73;
+  color: #ffffff;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 14px;
+  font-size: 0.85rem;
+  line-height: 1;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  flex: 1 1 0;
+  min-width: 0;
+  white-space: nowrap;
+}
+
+.btn-nav:hover {
+  background-color: #0a9396;
+}
+
 /* Grade de aulas */
 .lessons-grid {
   display: grid;

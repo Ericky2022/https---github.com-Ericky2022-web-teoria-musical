@@ -56,6 +56,56 @@ export class FluteLessonsComponent {
       };
     }
 
+    if (lessonNumber === 3) {
+      return {
+        number: lessonNumber,
+        title: `Aula ${lessonNumber}`,
+        sourceType: "youtube",
+        videoSrc: "https://youtu.be/jDafkTrZ21w",
+        scoreImageSrc: `assets/partituras/aula${lessonNumber}.png`,
+      };
+    }
+
+    if (lessonNumber === 4) {
+      return {
+        number: lessonNumber,
+        title: `Aula ${lessonNumber}`,
+        sourceType: "youtube",
+        videoSrc: "https://youtu.be/yIxmUDU2GXA",
+        scoreImageSrc: `assets/partituras/aula${lessonNumber}.png`,
+      };
+    }
+
+    if (lessonNumber === 5) {
+      return {
+        number: lessonNumber,
+        title: `Aula ${lessonNumber}`,
+        sourceType: "youtube",
+        videoSrc: "https://youtu.be/ChCy3gpIjew",
+        scoreImageSrc: `assets/partituras/aula${lessonNumber}.png`,
+      };
+    }
+
+    if (lessonNumber === 6) {
+      return {
+        number: lessonNumber,
+        title: `Aula ${lessonNumber}`,
+        sourceType: "youtube",
+        videoSrc: "https://youtu.be/CZvwbKxltdM",
+        scoreImageSrc: `assets/partituras/aula${lessonNumber}.png`,
+      };
+    }
+
+    if (lessonNumber === 7) {
+      return {
+        number: lessonNumber,
+        title: `Aula ${lessonNumber}`,
+        sourceType: "youtube",
+        videoSrc: "https://youtu.be/FU6Bbx2ZZlY",
+        scoreImageSrc: `assets/partituras/aula${lessonNumber}.png`,
+      };
+    }
+
     return {
       number: lessonNumber,
       title: `Aula ${lessonNumber}`,
@@ -98,6 +148,22 @@ export class FluteLessonsComponent {
   closeLesson(): void {
     this.selectedLesson = null;
     this.currentEmbedUrl = null;
+  }
+
+  get previousLesson(): FluteLesson | null {
+    if (!this.selectedLesson) return null;
+    const idx = this.lessons.findIndex(
+      (l) => l.number === this.selectedLesson!.number,
+    );
+    return idx > 0 ? this.lessons[idx - 1] : null;
+  }
+
+  get nextLesson(): FluteLesson | null {
+    if (!this.selectedLesson) return null;
+    const idx = this.lessons.findIndex(
+      (l) => l.number === this.selectedLesson!.number,
+    );
+    return idx < this.lessons.length - 1 ? this.lessons[idx + 1] : null;
   }
 
   goBack(): void {
