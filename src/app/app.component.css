@@ -44,6 +44,18 @@
   gap: 14px;
 }
 
+.screen.active .container {
+  min-height: 100vh;
+}
+
+.home-content {
+  flex: 1;
+}
+
+.home-footer {
+  margin-top: auto;
+}
+
 h1 {
   font-size: 28px;
   font-weight: 800;

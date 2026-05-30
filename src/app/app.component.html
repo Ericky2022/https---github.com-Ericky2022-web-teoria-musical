@@ -2,7 +2,7 @@
   <div class="bg-pattern"></div>
   <div class="container">
     <h1>Treino de Teoria Musical</h1>
-    <p class="subtitle">Informe seu nome e comece pelo nível Inicial</p>
+    <p class="subtitle">Informe seu nome e comece a aprender</p>
 
     <div class="card">
       <input
@@ -14,8 +14,11 @@
     </div>
 
     <div class="card info-card" *ngIf="!showOptions">
-      <strong>Ordem das fases</strong>
-      <p>Inicial (4 tempos) → Intermediário (2 tempos) → Avançado (1 tempo)</p>
+      <strong>Aprenda Partitura brincando</strong>
+      <p>
+        Nosso objetivo é fazer você aprender música brincando, de uma maneira
+        descontraída.
+      </p>
     </div>
 
     <button
@@ -26,41 +29,17 @@
       Começar treino
     </button>
 
-    <div *ngIf="showOptions">
+    <div class="home-content" *ngIf="showOptions">
       <div class="card info-card">
         <strong>Aluno: {{ playerName }}</strong>
-        <p>Escolha qualquer nível para testar as fases.</p>
+        <p>Aprenda partitura brincando</p>
         <p>Registros salvos: {{ localPerformanceCount }}</p>
       </div>
 
-      <button class="level-card level-learning" (click)="openLearningMenu()">
+      <button class="level-card level-learning" (click)="openPentagramaMenu()">
         <div class="level-info">
-          <span class="level-title">Conhecendo as notas</span>
-          <span class="level-sub">Fase 1 e fase 2</span>
-        </div>
-        <span class="arrow">›</span>
-      </button>
-
-      <button class="level-card" (click)="openPhases(0)">
-        <div class="level-info">
-          <span class="level-title">Inicial</span>
-          <span class="level-sub">4 tempos</span>
-        </div>
-        <span class="arrow">›</span>
-      </button>
-
-      <button class="level-card level-mid" (click)="openPhases(1)">
-        <div class="level-info">
-          <span class="level-title">Intermediário</span>
-          <span class="level-sub">2 tempos</span>
-        </div>
-        <span class="arrow">›</span>
-      </button>
-
-      <button class="level-card level-hard" (click)="openPhases(2)">
-        <div class="level-info">
-          <span class="level-title">Avançado</span>
-          <span class="level-sub">1 tempo</span>
+          <span class="level-title">Pentagrama</span>
+          <span class="level-sub">Conhecendo as notas até Avançado</span>
         </div>
         <span class="arrow">›</span>
       </button>
@@ -109,7 +88,7 @@
       </div>
     </div>
 
-    <footer>Objetivo: identificar a nota no pentagrama e reforçar ritmo</footer>
+    <footer class="home-footer">by EPS</footer>
   </div>
 </div>
 
@@ -218,7 +197,7 @@
       class="btn-back"
       (click)="
         isLearningMode
-          ? openLearningMenu()
+          ? returnToPreviousScreen()
           : isEarMode
             ? openEarMenu()
             : closeModalToPhases()
@@ -335,10 +314,53 @@
   </div>
 </div>
 
-<div class="screen" [class.active]="screen === 'learning-menu'">
+<div class="screen" [class.active]="screen === 'pentagrama'">
   <div class="bg-pattern"></div>
   <div class="container">
     <button class="btn-back" (click)="goHome()">← Voltar</button>
+    <h2>Pentagrama</h2>
+    <p class="subtitle">Escolha um caminho de estudo</p>
+
+    <button class="level-card level-learning" (click)="openLearningMenu()">
+      <div class="level-info">
+        <span class="level-title">Conhecendo as notas</span>
+        <span class="level-sub">Fase 1 e fase 2</span>
+      </div>
+      <span class="arrow">›</span>
+    </button>
+
+    <button class="level-card" (click)="openPhases(0)">
+      <div class="level-info">
+        <span class="level-title">Inicial</span>
+        <span class="level-sub">4 tempos</span>
+      </div>
+      <span class="arrow">›</span>
+    </button>
+
+    <button class="level-card level-mid" (click)="openPhases(1)">
+      <div class="level-info">
+        <span class="level-title">Intermediário</span>
+        <span class="level-sub">2 tempos</span>
+      </div>
+      <span class="arrow">›</span>
+    </button>
+
+    <button class="level-card level-hard" (click)="openPhases(2)">
+      <div class="level-info">
+        <span class="level-title">Avançado</span>
+        <span class="level-sub">1 tempo</span>
+      </div>
+      <span class="arrow">›</span>
+    </button>
+  </div>
+</div>
+
+<div class="screen" [class.active]="screen === 'learning-menu'">
+  <div class="bg-pattern"></div>
+  <div class="container">
+    <button class="btn-back" (click)="returnToPreviousScreen()">
+      ← Voltar
+    </button>
     <h2>Conhecendo as notas</h2>
     <p class="subtitle">Escolha a fase</p>
 
@@ -350,7 +372,7 @@
     <button class="phase-card" (click)="startLearningPhase(2)">
       <div class="phase-number learning-number">2</div>
       <div class="phase-desc">
-        Sem nome da nota, com botões e avanço só no acerto
+        Dó1 até Sol2 com botões e avanço só no acerto
       </div>
     </button>
   </div>
@@ -358,13 +380,15 @@
 
 <div class="screen" [class.active]="screen === 'flute-lessons'">
   <app-flute-lessons
-    (back)="goHome()"
+    (back)="returnToPreviousScreen()"
     (lessonAccess)="registerFluteLessonAccess($event)"
   ></app-flute-lessons>
 </div>
 
 <div class="screen" [class.active]="screen === 'rhythm-exercises'">
-  <app-rhythm-exercises (back)="goHome()"></app-rhythm-exercises>
+  <app-rhythm-exercises
+    (back)="returnToPreviousScreen()"
+  ></app-rhythm-exercises>
 </div>
 
 <div class="modal-overlay" *ngIf="modalVisible && resultState">

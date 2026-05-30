@@ -21,6 +21,7 @@ type Screen =
   | "exercise"
   | "report"
   | "ear-menu"
+  | "pentagrama"
   | "learning-menu"
   | "flute-lessons"
   | "rhythm-exercises"
@@ -163,6 +164,7 @@ export class AppComponent {
   ];
 
   screen: Screen = "home";
+  private previousScreen: Screen = "home";
   playerNameInput = "";
   playerName = "";
   showOptions = false;
@@ -327,11 +329,20 @@ export class AppComponent {
     this.screen = "ear-menu";
   }
 
+  openPentagramaMenu(): void {
+    this.clearTimer();
+    this.modalVisible = false;
+    this.isEarMode = false;
+    this.isLearningMode = false;
+    this.screen = "pentagrama";
+  }
+
   openLearningMenu(): void {
     this.clearTimer();
     this.modalVisible = false;
     this.isEarMode = false;
     this.isLearningMode = false;
+    this.previousScreen = this.screen;
     this.screen = "learning-menu";
   }
 
@@ -340,6 +351,7 @@ export class AppComponent {
     this.modalVisible = false;
     this.isEarMode = false;
     this.isLearningMode = false;
+    this.previousScreen = this.screen;
     this.screen = "flute-lessons";
     this.scrollToTop();
   }
@@ -349,8 +361,17 @@ export class AppComponent {
     this.modalVisible = false;
     this.isEarMode = false;
     this.isLearningMode = false;
+    this.previousScreen = this.screen;
     this.screen = "rhythm-exercises";
     this.scrollToTop();
+  }
+
+  returnToPreviousScreen(): void {
+    this.clearTimer();
+    this.modalVisible = false;
+    this.isEarMode = false;
+    this.isLearningMode = false;
+    this.screen = this.previousScreen;
   }
 
   registerFluteLessonAccess(event: {
@@ -409,6 +430,7 @@ export class AppComponent {
     this.clearTimer();
     this.modalVisible = false;
     this.isLearningMode = false;
+    this.previousScreen = "home";
     this.screen = "home";
   }
 
