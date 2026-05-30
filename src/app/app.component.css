@@ -439,14 +439,14 @@ canvas {
 }
 
 .options-grid {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 10px;
 }
 
 .btn-note {
-  width: 84px;
+  width: 100%;
+  min-width: 0;
   padding: 12px 0;
   background: #005f73;
   color: #ffffff;
@@ -535,7 +535,7 @@ canvas {
   }
 
   .btn-note {
-    width: 74px;
+    width: 100%;
     padding: 10px 0;
   }
 }

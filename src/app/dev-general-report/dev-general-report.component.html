@@ -31,6 +31,10 @@
     <strong>Acessos as aulas</strong>
     <span>{{ totalLessonAccesses }}</span>
   </div>
+  <div class="card report-metric">
+    <strong>Acessos ao app</strong>
+    <span>{{ totalAppAccesses }}</span>
+  </div>
 </div>
 
 <div
@@ -151,4 +155,23 @@
       </div>
     </div>
   </ng-container>
+</div>
+
+<div
+  class="report-list"
+  *ngIf="!isLoading && !errorMessage && totalAppAccesses > 0"
+>
+  <div class="report-row report-row-head">
+    <span>Data</span>
+    <span>Aluno</span>
+  </div>
+
+  <div
+    class="attempts-grid lesson-access-grid"
+    style="grid-template-columns: 1fr 1fr"
+    *ngFor="let access of appAccessRecords"
+  >
+    <span>{{ access.timestamp || "-" }}</span>
+    <span>{{ access.student || "Sem nome" }}</span>
+  </div>
 </div>

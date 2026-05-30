@@ -47,6 +47,12 @@ interface LessonAccessSummary {
   lastAccessAt: number;
 }
 
+interface AppAccessRecord {
+  student: string;
+  timestamp: string;
+  createdAt?: number;
+}
+
 @Component({
   selector: "app-dev-general-report",
   standalone: true,
@@ -57,9 +63,11 @@ interface LessonAccessSummary {
 export class DevGeneralReportComponent implements OnInit {
   records: PerformanceRecord[] = [];
   lessonAccessRecords: LessonAccessRecord[] = [];
+  appAccessRecords: AppAccessRecord[] = [];
   isLoading = false;
   errorMessage = "";
   lessonAccessError = "";
+  appAccessError = "";
   expandedStudent = "";
 
   private readonly firestoreDb = getFirestore(firebaseApp);
@@ -72,6 +80,7 @@ export class DevGeneralReportComponent implements OnInit {
     this.isLoading = true;
     this.errorMessage = "";
     this.lessonAccessError = "";
+    this.appAccessError = "";
 
     try {
       const recordsQuery = query(
@@ -118,9 +127,29 @@ export class DevGeneralReportComponent implements OnInit {
         this.lessonAccessError =
           "Nao foi possivel carregar os acessos das aulas de flauta.";
       }
+
+      try {
+        const appAccessSnapshot = await getDocs(
+          collection(this.firestoreDb, "app-accesses"),
+        );
+        this.appAccessRecords = appAccessSnapshot.docs
+          .map((item) => {
+            const data = item.data() as AppAccessRecord;
+            return {
+              student: data.student ?? "",
+              timestamp: data.timestamp ?? "",
+              createdAt: data.createdAt,
+            };
+          })
+          .sort((a, b) => (b.createdAt ?? 0) - (a.createdAt ?? 0));
+      } catch {
+        this.appAccessRecords = [];
+        this.appAccessError = "Nao foi possivel carregar os acessos ao app.";
+      }
     } catch {
       this.records = [];
       this.lessonAccessRecords = [];
+      this.appAccessRecords = [];
       this.errorMessage =
         "Nao foi possivel carregar o relatorio geral do Firestore.";
     } finally {
@@ -140,6 +169,10 @@ export class DevGeneralReportComponent implements OnInit {
 
   get totalLessonAccesses(): number {
     return this.lessonAccessRecords.length;
+  }
+
+  get totalAppAccesses(): number {
+    return this.appAccessRecords.length;
   }
 
   get lessonAccessSummaries(): LessonAccessSummary[] {

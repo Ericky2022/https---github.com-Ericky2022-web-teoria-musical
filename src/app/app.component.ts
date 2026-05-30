@@ -312,6 +312,7 @@ export class AppComponent {
     this.loadLocalPerformanceRecords();
     this.showOptions = true;
     void this.refreshPerformanceRecords();
+    void this.saveAppAccess(name);
   }
 
   openPhases(levelIdx: number): void {
@@ -1129,6 +1130,18 @@ export class AppComponent {
       await this.refreshPerformanceRecords();
     } catch {
       this.reportError = "Nao foi possivel salvar o resultado no Firestore.";
+    }
+  }
+
+  private async saveAppAccess(student: string): Promise<void> {
+    try {
+      await addDoc(collection(firestoreDb, "app-accesses"), {
+        student: student.trim(),
+        timestamp: new Date().toLocaleString("pt-BR"),
+        createdAt: Date.now(),
+      });
+    } catch {
+      // Nao interrompe o fluxo caso o registro falhe.
     }
   }
 
