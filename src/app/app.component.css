@@ -27,7 +27,7 @@
   inset: 0;
   z-index: 0;
   background-color: #e8f4f8;
-  background-image: url("/assets/images/home_background.svg");
+  background-image: url("assets/images/home_background.svg");
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
