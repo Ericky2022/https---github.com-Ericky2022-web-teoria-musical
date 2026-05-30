@@ -2,9 +2,11 @@
   <div class="bg-pattern"></div>
   <div class="container">
     <h1>Treino de Teoria Musical</h1>
-    <p class="subtitle">Informe seu nome e comece a aprender</p>
+    <p class="subtitle" *ngIf="!showOptions">
+      Informe seu nome e comece a aprender
+    </p>
 
-    <div class="card">
+    <div class="card" *ngIf="!showOptions">
       <input
         type="text"
         [(ngModel)]="playerNameInput"
@@ -33,7 +35,7 @@
       <div class="card info-card">
         <strong>Aluno: {{ playerName }}</strong>
         <p>Aprenda partitura brincando</p>
-        <p>Registros salvos: {{ localPerformanceCount }}</p>
+        <!-- <p>Registros salvos: {{ localPerformanceCount }}</p> -->
       </div>
 
       <button class="level-card level-learning" (click)="openPentagramaMenu()">
@@ -150,6 +152,8 @@
         <span>{{ record.percent.toFixed(1) }}%</span>
       </div>
     </div>
+
+    <footer class="home-footer">by EPS</footer>
   </div>
 </div>
 
@@ -162,6 +166,7 @@
   <div class="container">
     <button class="btn-back" (click)="goHome()">← Voltar</button>
     <app-dev-general-report></app-dev-general-report>
+    <footer class="home-footer">by EPS</footer>
   </div>
 </div>
 
@@ -187,6 +192,8 @@
       </div>
       <div class="phase-desc">{{ phase }}</div>
     </button>
+
+    <footer class="home-footer">by EPS</footer>
   </div>
 </div>
 
@@ -293,6 +300,8 @@
     >
       {{ feedback }}
     </div>
+
+    <footer class="home-footer">by EPS</footer>
   </div>
 </div>
 
@@ -311,6 +320,8 @@
       <div class="phase-number ear-number">{{ i + 1 }}</div>
       <div class="phase-desc">{{ range.label }}</div>
     </button>
+
+    <footer class="home-footer">by EPS</footer>
   </div>
 </div>
 
@@ -352,6 +363,8 @@
       </div>
       <span class="arrow">›</span>
     </button>
+
+    <footer class="home-footer">by EPS</footer>
   </div>
 </div>
 
@@ -375,6 +388,8 @@
         Dó1 até Sol2 com botões e avanço só no acerto
       </div>
     </button>
+
+    <footer class="home-footer">by EPS</footer>
   </div>
 </div>
 
