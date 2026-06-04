@@ -46,6 +46,7 @@ export class RhythmExercisesComponent implements OnDestroy {
   canProceed = false;
   recordedAudioUrl = "";
   comparisonMessage = "";
+  similarityPercent: number | null = null;
 
   private mediaRecorder?: MediaRecorder;
   private stream?: MediaStream;
@@ -75,8 +76,10 @@ export class RhythmExercisesComponent implements OnDestroy {
     this.comparisonDone = false;
     this.canProceed = false;
     this.comparisonMessage = "";
+    this.similarityPercent = null;
     this.recordedChunks = [];
     this.stopReferenceAudio();
+    this.stopSpeechFeedback();
 
     try {
       this.stream = await navigator.mediaDevices.getUserMedia({
@@ -182,18 +185,24 @@ export class RhythmExercisesComponent implements OnDestroy {
       );
 
       this.comparisonDone = true;
+      this.similarityPercent = Math.round(similarityPercent);
       if (similarityPercent >= this.similarityThreshold) {
         this.canProceed = true;
         this.comparisonMessage =
           "Muito bom! Pode seguir para o proximo exercicio.";
+        this.speakFeedback("Muito bom! Seu ritmo esta correto.");
       } else {
         this.canProceed = false;
         this.comparisonMessage =
           "Ainda nao ficou parecido o suficiente. Grave novamente.";
+        this.speakFeedback(
+          "Ainda nao ficou igual a partitura. Tente gravar novamente.",
+        );
       }
     } catch {
       this.comparisonDone = false;
       this.canProceed = false;
+      this.similarityPercent = null;
       this.comparisonMessage =
         "Nao foi possivel comparar o audio agora. Tente gravar novamente.";
     } finally {
@@ -422,8 +431,37 @@ export class RhythmExercisesComponent implements OnDestroy {
     this.isRecording = false;
     this.isAnalyzing = false;
     this.comparisonMessage = "";
+    this.similarityPercent = null;
     this.recordedChunks = [];
     this.revokeRecordedAudioUrl();
+    this.stopSpeechFeedback();
+  }
+
+  private speakFeedback(message: string): void {
+    if (!("speechSynthesis" in globalThis) || !message) {
+      return;
+    }
+
+    const utterance = new SpeechSynthesisUtterance(message);
+    utterance.lang = "pt-BR";
+    utterance.rate = 0.98;
+    utterance.pitch = 1;
+
+    this.stopSpeechFeedback();
+    globalThis.speechSynthesis.speak(utterance);
+  }
+
+  private stopSpeechFeedback(): void {
+    if (!("speechSynthesis" in globalThis)) {
+      return;
+    }
+
+    if (
+      globalThis.speechSynthesis.speaking ||
+      globalThis.speechSynthesis.pending
+    ) {
+      globalThis.speechSynthesis.cancel();
+    }
   }
 
   private revokeRecordedAudioUrl(): void {
@@ -438,6 +476,7 @@ export class RhythmExercisesComponent implements OnDestroy {
   ngOnDestroy(): void {
     this.releaseMicrophone();
     this.revokeRecordedAudioUrl();
+    this.stopSpeechFeedback();
     void this.audioContext?.close();
   }
 }
